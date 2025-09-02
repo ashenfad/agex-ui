@@ -1,0 +1,31 @@
+[project]
+name = "agex-ui"
+version = "0.0.1"
+description = "A dynamic, agent-driven UI builder powered by agex and NiceGUI."
+authors = [{ name = "Ash Enfad", email = "ashenfad@gmail.com" }]
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "nicegui",
+    "agex"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "black",
+    "uv"
+]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W", "I"]

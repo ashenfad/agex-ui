@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "agex-ui",
+      "path": "."
+    },
+    {
+      "name": "agex",
+      "path": "../agex"
+    }
+  ],
+  "settings": {
+    "python.analysis.extraPaths": ["../agex"],
+    "python.defaultInterpreterPath": "./venv/bin/python"
+  }
+}
+
