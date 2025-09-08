@@ -11,12 +11,8 @@ agent = Agent(
     name="lorem_ipsum",
     primer=PRIMER,
     llm_client=connect_llm(
-        # provider="anthropic",
-        # model="claude-sonnet-4-0",
-        # model="qwen3-coder:30b",
-        # base_url="http://localhost:11434/v1",
         provider="openai",
-        model="gpt-5",
+        model="gpt-5-nano",
         reasoning_effort="medium",
     ),
 )
