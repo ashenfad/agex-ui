@@ -2,7 +2,7 @@
 
 This repository demonstrates how the [`agex`](https://github.com/ashenfad/agex) framework can be used to create dynamic, agent-driven user interfaces with [NiceGUI](https://nicegui.io/).
 
-<a href="https://youtu.be/kR8tGD0N28Y">
+<a href="https://youtu.be/-LaY_QBfkf8">
   <img src="resources/chat.png" width="600" alt="Watch the Agex-UI Demo">
 </a>
 
