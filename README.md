@@ -1,16 +1,52 @@
 # agex-ui: Agent-Driven UIs with NiceGUI
 
-This repository demonstrates how the [`agex`](https://github.com/ashenfad/agex) framework can be used to create dynamic, agent-driven user interfaces with [NiceGUI](https://nicegui.io/).
-
-<a href="https://youtu.be/-LaY_QBfkf8">
-  <img src="resources/chat.png" width="600" alt="Watch the Agex-UI Demo">
-</a>
+This repository demonstrates how the [`agex`](https://ashenfad.github.io/agex/) framework can be used to create dynamic, agent-driven user interfaces with [NiceGUI](https://nicegui.io/).
 
 The core concept is to give an AI agent direct, sandboxed access to the NiceGUI library, allowing it to build and modify a user interface at runtime in response to natural language prompts.
 
+## Included Demos
+
+This repository contains two working examples:
+
+1.  **Interactive Chat UI (`agex_ui/chat`)**: A chat interface where an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
+
+Video:
+<a href="https://youtu.be/-LaY_QBfkf8">
+  <img src="resources/chat.png" width="400" alt="Watch the Agex-UI Demo">
+</a>
+
+
+2.  **Dynamic Page Generation (`agex_ui/lorem_ipsum`)**: A web server that uses an agent to dynamically generate entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
+
+Result for `http://127.0.0.1:8080/weather/albany/or`:
+<img src="resources/lorem.png" width="400" alt="Notional weather page">
+
+## Running the Demos
+
+First, set up the environment:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install the project and its dependencies
+pip install -e .
+```
+
+Then, run one of the examples:
+
+```bash
+# To run the chat interface
+python -m agex_ui.chat.main
+
+# To run the dynamic page generator
+python -m agex_ui.lorem_ipsum.main
+```
+
 ## The Technical Approach: Bypassing the Tool-Layer
 
-Most agentic frameworks rely on a "tool-layer" abstraction. To allow an agent to build a UI, a developer would need to write explicit wrapper functions (tools) with rigid JSON schemas for every UI component they want the agent to use:
+Most agentic frameworks rely on a "tool-layer" abstraction. To allow an agent to build a UI, a developer would need to write explicit wrapper functions (tools) with JSON schemas for every UI component they want the agent to use:
 
 ```python
 # Traditional approach: A predefined, rigid tool
@@ -21,9 +57,10 @@ def create_button(text: str, color: str, on_click_handler: str):
     pass
 ```
 
-This approach requires the agent's behavior to be anticipated and constrained by the predefined parameters of the tool schema.
+But this doesn't scale well to complex nested components. The ability for an agent
+to compose is lost.
 
-`agex` takes a different approach by providing the agent with direct, runtime access to Python libraries. Instead of defining tools, you register the `nicegui` module itself. The agent then writes Python code to call the NiceGUI API directly, giving it access to the full capabilities of the library:
+`agex` takes a different approach by providing the agent with direct, runtime access to Python libraries. Instead of defining tools, you register the `nicegui` module itself. The agent then writes Python code to call the NiceGUI API directly (while remaining sandboxed):
 
 ```python
 # (Code an agex agent might generate)
@@ -46,32 +83,4 @@ task_success()
 
 This allows the agent to combine components, create layouts, and handle interactions in ways not predefined by the developer, enabling novel UI structures at runtime.
 
-## Included Demos
-
-This repository contains two working examples:
-
-1.  **Interactive Chat UI (`agex_ui/chat`)**: A chat interface where an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
-2.  **Dynamic Page Generation (`agex_ui/lorem_ipsum`)**: A web server that uses an agent to dynamically generate entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
-
-## Running the Demos
-
-First, set up the environment:
-
-```bash
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install the project and its dependencies
-pip install -e ".[dev]"
-```
-
-Then, run one of the examples:
-
-```bash
-# To run the chat interface
-python -m agex_ui.chat.main
-
-# To run the dynamic page generator
-python -m agex_ui.lorem_ipsum.main
-```
+For more, see [https://ashenfad.github.io/agex/](https://ashenfad.github.io/agex/).
