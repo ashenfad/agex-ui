@@ -1,7 +1,7 @@
 from typing import Any
 import nicegui
 import nicegui.ui as ui
-from agex import Agent, connect_llm, Live
+from agex import Agent, connect_llm, Live, view, summarize_capabilities
 from agex.helpers import (
     register_pandas,
     register_plotly,
@@ -13,18 +13,11 @@ from agex_ui.chat.primer import PRIMER
 
 state = Live()
 agent = Agent(
-    name="nicegui",
+    name="chat",
     primer=PRIMER,
     llm_client=connect_llm(provider="openai", model="gpt-5", reasoning_effort="medium"),
 )
 
-
-# let the agent use nicegui
-agent.module(nicegui, recursive=True, visibility="low")
-
-# agents are less familiar with nicegui v2, so we'll add
-# basic constructor sigs for ui elements to the context
-agent.module(ui, recursive=True, visibility="medium")
 
 # enable stdlib & data-oriented libs via helpers
 # we're trusting the agent with io (so it can use temp files)
@@ -32,6 +25,20 @@ register_stdlib(agent, io_friendly=True)
 register_pandas(agent, io_friendly=True)
 register_plotly(agent, io_friendly=True)
 register_numpy(agent, io_friendly=True)
+
+# let the agent use nicegui but agents are less familiar with v2...
+# so we'll expose the ui module with high visibility
+agent.module(nicegui, recursive=True, visibility="low")
+agent.module(ui, recursive=True, visibility="high")
+
+# nicegui's ui module documentation is *huge* (~385K tokens)! so we'll
+# summarize it via this helper to replace the standard visibility rendering
+agent.capabilities_primer = summarize_capabilities(
+    agent,
+    target_chars=16000,
+    llm_client=connect_llm(provider="openai", model="gpt-4.1", max_tokens=8000),
+    use_cache=True,  # cache to `.agex` so we only build this once
+)
 
 
 @agent.task
