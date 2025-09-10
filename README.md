@@ -11,6 +11,7 @@ This repository contains two working examples:
 1.  **Interactive Chat UI (`agex_ui/chat`)**: A chat interface where an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
 
 Video:
+
 <a href="https://youtu.be/-LaY_QBfkf8">
   <img src="resources/chat.png" width="400" alt="Watch the Agex-UI Demo">
 </a>
@@ -19,6 +20,7 @@ Video:
 2.  **Dynamic Page Generation (`agex_ui/lorem_ipsum`)**: A web server that uses an agent to dynamically generate entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
 
 Result for `http://127.0.0.1:8080/weather/albany/or`:
+
 <img src="resources/lorem.png" width="400" alt="Notional weather page">
 
 ## Running the Demos
