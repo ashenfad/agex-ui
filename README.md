@@ -4,11 +4,9 @@ This repository demonstrates how the [`agex`](https://ashenfad.github.io/agex/) 
 
 The core concept is to give an AI agent direct, sandboxed access to the NiceGUI library, allowing it to build and modify a user interface at runtime in response to natural language prompts.
 
-## Included Demos
+## Demo 1: Interactive Chat UI
 
-This repository contains two working examples:
-
-1.  **Interactive Chat UI (`agex_ui/chat`)**: A chat interface where an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
+In the [agex_ui/chat](agex_ui/chat/) demo an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
 
 Video:
 
@@ -17,7 +15,9 @@ Video:
 </a>
 
 
-2.  **Dynamic Page Generation (`agex_ui/lorem_ipsum`)**: A web server that uses an agent to dynamically generate entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
+# Demo 2: Dynamic Page Generation
+
+In the [agex_ui/lorem_ipsum](agex_ui/lorem_ipsum/) demo, an agent to dynamically generates entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
 
 Result for `http://127.0.0.1:8080/weather/albany/or`:
 
