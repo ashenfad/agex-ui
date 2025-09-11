@@ -4,6 +4,8 @@ This repository demonstrates how the [`agex`](https://ashenfad.github.io/agex/) 
 
 The core concept is to give an AI agent direct, sandboxed access to the NiceGUI library, allowing it to build and modify a user interface at runtime in response to natural language prompts.
 
+For a deep-dive blog: [https://ashenfad.github.io/agex/agex-ui/](https://ashenfad.github.io/agex/agex-ui/)
+
 ## Demo 1: Interactive Chat UI
 
 In the [agex_ui/chat](agex_ui/chat/) demo an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
