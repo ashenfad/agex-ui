@@ -13,7 +13,7 @@ In the [agex_ui/chat](agex_ui/chat/) demo an agent builds and renders UI compone
 Video:
 
 <a href="https://youtu.be/-LaY_QBfkf8">
-  <img src="resources/chat.png" width="400" alt="Watch the Agex-UI Demo">
+  <img src="assets/chat.png" width="400" alt="Watch the Agex-UI Demo">
 </a>
 
 
@@ -23,7 +23,7 @@ In the [agex_ui/lorem_ipsum](agex_ui/lorem_ipsum/) demo, an agent to dynamically
 
 Result for `http://127.0.0.1:8080/weather/albany/or`:
 
-<img src="resources/lorem.png" width="400" alt="Notional weather page">
+<img src="assets/lorem.png" width="400" alt="Notional weather page">
 
 ## Running the Demos
 
