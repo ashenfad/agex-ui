@@ -13,10 +13,10 @@ classifiers = [
 ]
 dependencies = [
     "nicegui",
-    "plotly"
-    "numpy"
-    "pandas"
-    "agex[openai]"  # or "agex[anthropic]" or "agex[gemini]"
+    "plotly",
+    "numpy",
+    "pandas",
+    "agex[openai]"
 ]
 
 [project.optional-dependencies]
@@ -25,6 +25,9 @@ dev = [
     "black",
     "uv"
 ]
+
+[tool.setuptools]
+packages = {find = {where = ["./"], exclude = ["tests*", "build*"]}}  # Discover packages, exclude tests/examples
 
 [tool.black]
 line-length = 88
