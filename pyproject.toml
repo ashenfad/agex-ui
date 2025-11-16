@@ -16,7 +16,8 @@ dependencies = [
     "plotly",
     "numpy",
     "pandas",
-    "agex[openai]"
+    "agex[openai]",
+    "calgebra[google-calendar]"
 ]
 
 [project.optional-dependencies]
