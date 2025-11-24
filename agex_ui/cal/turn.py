@@ -1,6 +1,7 @@
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -23,6 +24,34 @@ async def scroll_chat_to_bottom(chat_container: ui.column):
         ui.run_javascript(
             "document.getElementById('chat-messages-container').scrollTop = 999999"
         )
+
+
+def _render_plotly_figures(evt: OutputEvent) -> tuple[list[Any], list[Any]]:
+    """
+    Extract Plotly figures from OutputEvent parts and separate them from other parts.
+
+    Returns:
+        tuple: (plotly_figures, other_parts) where plotly_figures is a list of Plotly figure objects
+               and other_parts is a list of all other parts from the event.
+    """
+    from agex.eval.objects import ImageAction
+
+    plotly_figures = []
+    other_parts = []
+
+    for part in evt.parts:
+        if isinstance(part, ImageAction):
+            # Check if the image is a Plotly figure
+            if hasattr(part.image, "to_image") and callable(
+                getattr(part.image, "to_image", None)
+            ):
+                plotly_figures.append(part.image)
+            else:
+                other_parts.append(part)
+        else:
+            other_parts.append(part)
+
+    return plotly_figures, other_parts
 
 
 def _to_component(result: str | pd.DataFrame | go.Figure | Response):
@@ -95,7 +124,6 @@ async def run_agent_turn(
 
     def on_agent_event(evt: Event):
         """A thread-safe callback to handle agent events."""
-        print("Event received: ", evt)
         nonlocal current_expansion, event_count
         if not isinstance(evt, OutputEvent):
             return
@@ -109,7 +137,75 @@ async def run_agent_turn(
             _update_activity_label()
 
             with current_expansion:
-                ui.html(evt.as_html()).classes("w-full p-0 my-0")
+                # Extract Plotly figures from event parts
+                plotly_figures, other_parts = _render_plotly_figures(evt)
+
+                # Render Plotly figures with ui.plotly() wrapped in card structure
+                # Create a single OutputEvent-like card for all Plotly figures
+                if plotly_figures:
+                    # Build the card HTML matching OutputEvent structure
+                    import html as html_escape
+
+                    formatted_timestamp = (
+                        evt.timestamp.replace(microsecond=0)
+                        .isoformat()
+                        .replace("+00:00", "Z")
+                        if evt.timestamp
+                        else ""
+                    )
+                    metadata_line = formatted_timestamp
+                    if evt.commit_hash:
+                        metadata_line += f' • <code style="background: #f1f3f4; padding: 1px 4px; border-radius: 2px; font-family: monospace; font-size: 11px;">{evt.commit_hash[:8]}</code>'
+
+                    # Create card container matching OutputEvent.as_html() structure
+                    with (
+                        ui.card()
+                        .classes("w-full")
+                        .style(
+                            "border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px; margin: 8px 0; background: #f6f8fa;"
+                        )
+                    ):
+                        # Header matching OutputEvent structure
+                        ui.html(
+                            f"""
+                            <div style="font-weight: 600; color: #24292e; margin-bottom: 8px; font-size: 14px;">
+                                🤖 OutputEvent - {html_escape.escape(evt.full_namespace or evt.agent_name)}
+                            </div>
+                            <div style="font-size: 12px; color: #6a737d; margin-bottom: 12px;">
+                                {metadata_line}
+                            </div>
+                            <div style="border-left: 3px solid #6f42c1; padding-left: 10px; margin: 5px 0;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 1em; color: #6f42c1;">📤 Output:</h4>
+                            </div>
+                            """
+                        ).classes("w-full p-0 my-0")
+
+                        # Render each Plotly figure
+                        for fig in plotly_figures:
+                            # Update figure layout to be responsive and fill container
+                            if hasattr(fig, "update_layout"):
+                                fig.update_layout(
+                                    autosize=True,
+                                    width=None,
+                                    height=None,
+                                )
+                            # Make the figure responsive and fill the card without overflow
+                            ui.plotly(fig).classes("w-full h-80").style("width: 640px")
+
+                # Render other parts as HTML (if any)
+                if other_parts:
+                    # Create a temporary OutputEvent with just the non-Plotly parts
+                    from agex.agent.events import OutputEvent
+
+                    other_event = OutputEvent(
+                        agent_name=evt.agent_name,
+                        parts=other_parts,
+                        timestamp=evt.timestamp,
+                        full_namespace=evt.full_namespace,
+                        commit_hash=evt.commit_hash,
+                    )
+                    html_content = other_event.as_html()
+                    ui.html(html_content).classes("w-full p-0 my-0")
 
         # Safely schedule the UI update on the main loop from the background thread.
         asyncio.run_coroutine_threadsafe(do_ui_update(), loop)
