@@ -6,11 +6,11 @@ A clean, reusable framework for building agent-driven user interfaces with [`age
 
 ## Features
 
-✨ **Multi-Type Responses**: Agents can return text (markdown), pandas DataFrames, and Plotly figures in a single response  
-🎯 **Agent-Agnostic Core**: Works with any agex task function—bring your own agent  
-⚡ **Real-Time Streaming**: Token-by-token rendering of agent actions with thinking and code blocks  
-🎨 **Collapsible Activity View**: Agent events displayed in organized, expandable sections  
-🔧 **Highly Configurable**: Customize appearance, behavior, and rendering via dataclass configs
+This repository serves as a reference implementation for integrating `agex` agents into a web UI.
+
+- **Multi-Type Responses**: Renders text, DataFrames, and Plotly figures.
+- **Real-Time Streaming**: Displays agent thought and action events as they happen.
+- **Agent Integration**: Standard patterns for connecting `agex` tasks to the UI.
 
 ## Architecture
 
@@ -171,7 +171,10 @@ TurnConfig(
 
 ## The Calendar Assistant Example
 
-The included `cal` package demonstrates a production-ready agent that manages Google Calendar using the `calgebra` library. It showcases:
+The included `cal` package demonstrates a production-ready agent that manages Google Calendar using the [`calgebra`](https://github.com/ashenfad/calgebra) library.
+This integration demonstrates how `agex` enables agents to use targeted DSLs as a powerful alternative to high-level JSON-based tooling.
+
+It showcases:
 
 - Complex agent setup with multiple library registrations
 - Domain-specific helper functions
