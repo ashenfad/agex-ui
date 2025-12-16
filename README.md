@@ -49,6 +49,9 @@ python -m agex_ui.cal.main
 
 Then open your browser to the displayed URL (typically `http://localhost:8080`).
 
+> [!WARNING]
+> **Configuration Required**: This example requires valid [Google Calendar credentials](https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials) and a configured [LLM provider](https://ashenfad.github.io/agex/api/agent/#llm-configuration).
+
 ## Building Your Own Agent-Driven UI
 
 Here's how to create a custom agent-driven chat interface:

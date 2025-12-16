@@ -8,16 +8,15 @@ from calgebra.gcsa import Event
 
 from agex_ui.cal.primer import PRIMER
 from agex_ui.cal.utils import events_to_dataframe, intervals_to_dataframe, user_timezone
-from agex_ui.core.responses import Response  # Import from core instead
+from agex_ui.core.responses import Response
 
-USER_TIMEZONE = user_timezone()
-USER_CONTEXT = f"## User Context\n\n- Default timezone: {USER_TIMEZONE}"
+TZ = user_timezone()
+USER_CONTEXT = f"## User Context\n\n- Default timezone: {TZ}"
 PRIMER_PARTS = [
     PRIMER,
     USER_CONTEXT,
     calgebra.docs["api"],
     calgebra.docs["quick_start"],
-    # calgebra.docs["tutorial"],
     calgebra.docs["gcsa"],
 ]
 
@@ -25,7 +24,6 @@ agent = Agent(
     name="cal",
     primer="\n\n".join(PRIMER_PARTS),
     llm_client=connect_llm(provider="anthropic", model="claude-haiku-4-5"),
-    # llm_client=connect_llm(provider="anthropic", model="claude-sonnet-4-5"),
     max_iterations=10,
     timeout_seconds=15,
     log_high_water_tokens=150000
@@ -58,6 +56,7 @@ register_plotly(agent)
 agent.cls(Response)
 
 
+# The setup runs before a task to help provide programmatic context to the agent
 SETUP_ACTION = """
 import pandas as pd
 from datetime import date
