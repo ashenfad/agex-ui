@@ -18,7 +18,7 @@ dependencies = [
     "numpy",
     "pandas",
     "agex[anthropic]>=0.6.0",
-    "calgebra[google-calendar]>=0.8.2"
+    "calgebra[google-calendar]>=0.8.4"
 ]
 
 [project.optional-dependencies]
