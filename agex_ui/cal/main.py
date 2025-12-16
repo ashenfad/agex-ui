@@ -1,49 +1,38 @@
-from nicegui import ui, app
-from agex_ui.cal.turn import get_timestamp, run_agent_turn
+"""Calendar assistant chat interface using agex-ui core framework."""
 
+from nicegui import ui, app
+
+from agex_ui.cal.agent import handle_prompt, state
+from agex_ui.core.turn import TurnConfig
+from agex_ui.templates.chat_interface import ChatInterfaceConfig, create_chat_interface
+
+# Serve static assets
 app.add_static_files("/assets", "./assets")
 
-
-# Configure the main window
-ui.query("body").style(
-    "background-color: #fcfcfc; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0;"
+# Configure chat interface
+chat_config = ChatInterfaceConfig(
+    title="Calendar Assistant",
+    page_title="Cal - Agex UI",
+    greeting="Hello! I can help you manage your Google Calendar.",
+    agent_name="Cal",
+    max_width="1000px",
 )
-ui.page_title("Agex-UI")
-with (
-    ui.header(elevated=False)
-    .style("background-color: #5894c8;")
-    .classes("items-center justify-between")
-):
-    ui.label("Agex-UI").classes("text-2xl")
 
-# Main content area - full width chat
-with ui.column().classes("w-full h-full p-4").style("flex-grow: 1; width: 900px;"):
-    # Chat messages area that grows and scrolls
-    chat_messages = (
-        ui.column()
-        .classes("w-full overflow-auto p-4")
-        .style("height: 75vh; max-height: 75vh;")
-        .props("id=chat-messages-container")
-    )
-    with chat_messages:
-        ui.chat_message(
-            "Hello! How can I help you today?",
-            sent=False,
-            name="Agex",
-            avatar="assets/robot.png",
-            stamp=get_timestamp(),
-        ).classes("w-full").props("bg-color=blue-2")
+# Configure turn execution
+turn_config = TurnConfig(
+    show_setup_events=False,  # Hide setup events to reduce clutter
+    enable_token_streaming=True,
+    auto_scroll=True,
+    collapse_agent_activity=True,
+)
 
-    # Chat input area at the bottom
-    with ui.row().classes("w-full items-center p-2 border-t"):
-        chat_input = ui.input(placeholder="Type your request...").classes("flex-grow")
+# Create the chat interface
+chat_messages, chat_input = create_chat_interface(
+    agent_task=handle_prompt,
+    state=state,
+    config=chat_config,
+    turn_config=turn_config,
+)
 
-
-async def _handle_chat_input():
-    """Handler for when user presses enter in the chat input."""
-    await run_agent_turn(chat_messages, chat_input, prompt=chat_input.value)
-
-
-chat_input.on("keydown.enter", _handle_chat_input)
-
+# Run the app
 ui.run()

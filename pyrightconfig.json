@@ -1,5 +1,5 @@
 {
-  "extraPaths": ["../agex"],
+  "extraPaths": ["../agex", "../calgebra"],
   "reportUnusedCallResult": "none",
   "reportReturnType": "none",
   "reportUnusedParameter": "none",

@@ -1,90 +1,199 @@
-# agex-ui: Agent-Driven UIs with NiceGUI
+# agex-ui: Production-Ready Agent-Driven UIs
 
-This repository demonstrates how the [`agex`](https://ashenfad.github.io/agex/) framework can be used to create dynamic, agent-driven user interfaces with [NiceGUI](https://nicegui.io/).
+A clean, reusable framework for building agent-driven user interfaces with [`agex`](https://ashenfad.github.io/agex/) and [NiceGUI](https://nicegui.io/).
 
-The core concept is to give an AI agent direct, sandboxed access to the NiceGUI library, allowing it to build and modify a user interface at runtime in response to natural language prompts.
+**agex-ui** provides production-ready components for creating chat interfaces where AI agents can respond with rich, multi-type outputs including text, dataframes, and plotly visualizations—all with real-time streaming of agent activity.
 
-For a deep-dive check the assicated [blog post](http://127.0.0.1:8000/agex/blog/2025/09/11/deep-dive-building-an-agent-driven-ui-with-agex-ui/).
+## Features
 
-## Demo 1: Interactive Chat UI
+✨ **Multi-Type Responses**: Agents can return text (markdown), pandas DataFrames, and Plotly figures in a single response  
+🎯 **Agent-Agnostic Core**: Works with any agex task function—bring your own agent  
+⚡ **Real-Time Streaming**: Token-by-token rendering of agent actions with thinking and code blocks  
+🎨 **Collapsible Activity View**: Agent events displayed in organized, expandable sections  
+🔧 **Highly Configurable**: Customize appearance, behavior, and rendering via dataclass configs
 
-In the [agex_ui/chat](agex_ui/chat/) demo an agent builds and renders UI components (forms, buttons, etc.) directly into the conversation. These components can act as forms, providing structured data back to the agent upon submission for subsequent actions.
+## Architecture
 
-Video:
+```
+agex_ui/
+├── core/           # Reusable framework components
+│   ├── responses.py    # Response type system (Response, ResponsePart, etc.)
+│   ├── renderers.py    # UI renderers for responses and events
+│   ├── events.py       # Event handling and token streaming
+│   └── turn.py         # Turn orchestration (run_agent_turn)
+├── templates/      # UI templates
+│   └── chat_interface.py  # Standard chat interface template
+└── cal/            # Calendar assistant example
+    ├── agent.py        # Agent definition with calgebra integration
+    ├── main.py         # Application entry point
+    ├── primer.py       # Agent system prompts
+    └── utils.py        # Calendar-specific utilities
+```
 
-<a href="https://youtu.be/-LaY_QBfkf8">
-  <img src="assets/chat.png" width="400" alt="Watch the Agex-UI Demo">
-</a>
+## Quick Start
 
-
-# Demo 2: Dynamic Page Generation
-
-In the [agex_ui/lorem_ipsum](agex_ui/lorem_ipsum/) demo, an agent to dynamically generates entire pages on the fly for any visited URL (e.g., `/dashboard`, `/profile`), complete with layouts and data visualizations.
-
-Result for `http://127.0.0.1:8080/weather/albany/or`:
-
-<img src="assets/lorem.png" width="400" alt="Notional weather page">
-
-## Running the Demos
-
-First, set up the environment:
+### Installation
 
 ```bash
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install the project and its dependencies
+# Clone and install
+git clone https://github.com/ashenfad/agex-ui.git
+cd agex-ui
 pip install -e .
 ```
 
-Then, run one of the examples:
+### Running the Calendar Assistant
 
 ```bash
-# To run the chat interface
-python -m agex_ui.chat.main
-
-# To run the dynamic page generator
-python -m agex_ui.lorem_ipsum.main
+python -m agex_ui.cal.main
 ```
 
-## The Technical Approach: Bypassing the Tool-Layer
+Then open your browser to the displayed URL (typically `http://localhost:8080`).
 
-Most agentic frameworks rely on a "tool-layer" abstraction. To allow an agent to build a UI, a developer would need to write explicit wrapper functions (tools) with JSON schemas for every UI component they want the agent to use:
+## Building Your Own Agent-Driven UI
+
+Here's how to create a custom agent-driven chat interface:
+
+### 1. Define Your Agent Task
 
 ```python
-# Traditional approach: A predefined, rigid tool
-@agent.tool
-def create_button(text: str, color: str, on_click_handler: str):
-    """Creates a button with limited, predefined options."""
-    # ... logic to create a button from JSON ...
-    pass
+# my_agent.py
+from agex import Agent, connect_llm
+from agex_ui.core.responses import Response
+import pandas as pd
+
+agent = Agent(
+    name="my_agent",
+    primer="You are a helpful assistant...",
+    llm_client=connect_llm(provider="anthropic", model="claude-haiku-4-5"),
+)
+
+# Register the Response type
+agent.cls(Response)
+
+@agent.task
+def handle_prompt(prompt: str) -> Response:
+    """Process user prompt and return a multi-part response."""
+    # Your agent logic here
+    return Response(parts=[
+        "Here's your analysis:",
+        pd.DataFrame({"col1": [1, 2, 3]}),
+    ])
 ```
 
-But this doesn't scale well to complex nested components. The ability for an agent
-to compose is lost.
-
-`agex` takes a different approach by providing the agent with direct, runtime access to Python libraries. Instead of defining tools, you register the `nicegui` module itself. The agent then writes Python code to call the NiceGUI API directly (while remaining sandboxed):
+### 2. Create the Chat Interface
 
 ```python
-# (Code an agex agent might generate)
+# main.py
+from nicegui import ui, app
+from agex_ui.templates import create_chat_interface, ChatInterfaceConfig
+from agex_ui.core.turn import TurnConfig
+from my_agent import handle_prompt
 
-with inputs.col:
-    ui.label("Custom Analysis").classes("text-2xl")
+app.add_static_files("/assets", "./assets")
 
-    # The agent has access to any NiceGUI component and configuration
-    data_input = ui.input("Enter data source")
-    chart_type = ui.select(["bar", "line", "pie", "scatter"])
-    
-    # The agent can compose components and lambda functions
-    ui.button("Generate", on_click=lambda: form_submit({
-        'data': data_input.value,
-        'chart': chart_type.value
-    }))
+# Create interface
+chat_messages, chat_input = create_chat_interface(
+    agent_task=handle_prompt,
+    config=ChatInterfaceConfig(
+        title="My Agent App",
+        page_title="My App",
+        greeting="Hello! How can I help?",
+    ),
+    turn_config=TurnConfig(
+        show_setup_events=False,
+        enable_token_streaming=True,
+    ),
+)
 
-task_success()
+ui.run()
 ```
 
-This allows the agent to combine components, create layouts, and handle interactions in ways not predefined by the developer, enabling novel UI structures at runtime.
+That's it! You now have a full-featured agent-driven chat interface.
 
-For more, see [https://ashenfad.github.io/agex/](https://ashenfad.github.io/agex/).
+## Response Types
+
+Agents can return any combination of:
+
+- **Text (str)**: Rendered as markdown
+- **DataFrames (pd.DataFrame)**: Rendered as interactive tables
+- **Plotly Figures (go.Figure)**: Rendered as interactive charts
+- **Response**: Multi-part container for combining types
+
+```python
+from agex_ui.core.responses import Response
+
+# Single type
+return "Simple text response"
+
+# Multiple types in one response
+return Response(parts=[
+    "Analysis complete:",
+    dataframe,
+    plotly_figure,
+    "Additional notes...",
+])
+```
+
+## Configuration Options
+
+### ChatInterfaceConfig
+
+Customize the chat interface appearance:
+
+```python
+ChatInterfaceConfig(
+    header_bg_color="#5894c8",     # Header background color
+    title="My App",                 # Header title
+    page_title="My App",            # Browser page title
+    max_width="900px",              # Chat container width
+    greeting="Welcome!",            # Initial bot message
+    robot_avatar="assets/robot.png",
+    human_avatar="assets/human.png",
+    agent_name="MyAgent",
+)
+```
+
+### TurnConfig
+
+Customize turn execution behavior:
+
+```python
+TurnConfig(
+    show_setup_events=False,        # Show/hide agent setup events
+    enable_token_streaming=True,    # Enable real-time token streaming
+    auto_scroll=True,                # Auto-scroll to new messages
+    collapse_agent_activity=True,   # Start with activity collapsed
+)
+```
+
+## The Calendar Assistant Example
+
+The included `cal` package demonstrates a production-ready agent that manages Google Calendar using the `calgebra` library. It showcases:
+
+- Complex agent setup with multiple library registrations
+- Domain-specific helper functions
+- Rich responses combining text, tables, and visualizations
+- Custom primer engineering for calendar operations
+
+See [`agex_ui/cal/`](agex_ui/cal/) for the implementation.
+
+## Design Philosophy
+
+**Agent-Agnostic Core**: The framework doesn't create or configure agents. You define your agent with domain-specific setup, then pass its task function to the UI framework.
+
+**Separation of Concerns**:
+- **Core**: UI orchestration, rendering, event handling (framework layer)
+- **Templates**: Reusable layouts and configurations (presentation layer)
+- **Your Agent**: Domain logic, tools, prompts (application layer)
+
+This architecture ensures the framework remains flexible and reusable across different agent implementations.
+
+## Learn More
+
+- **agex Documentation**: [ashenfad.github.io/agex/](https://ashenfad.github.io/agex/)
+- **NiceGUI Documentation**: [nicegui.io](https://nicegui.io/)
+- **Blog Post**: Building Agent-Driven UIs with agex (coming soon)
+
+## License
+
+MIT License - See [LICENSE](LICENSE) file for details.
