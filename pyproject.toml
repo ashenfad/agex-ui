@@ -17,8 +17,8 @@ dependencies = [
     "kaleido",  # for exporting plotly figures
     "numpy",
     "pandas",
-    "agex[openai]",
-    "calgebra[google-calendar]>=0.6.1"
+    "agex[anthropic]>=0.6.0",
+    "calgebra[google-calendar]>=0.8.2"
 ]
 
 [project.optional-dependencies]
