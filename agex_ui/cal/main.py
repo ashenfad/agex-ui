@@ -34,5 +34,7 @@ chat_messages, chat_input = create_chat_interface(
     turn_config=turn_config,
 )
 
-# Run the app
+# Run the app...
+# But you'll need oauth for google calendar access!
+# See https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials
 ui.run()
