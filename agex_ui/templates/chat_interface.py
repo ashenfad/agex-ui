@@ -4,7 +4,7 @@ Provides a standard chat UI layout that can be customized via configuration.
 """
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -29,7 +29,7 @@ class ChatInterfaceConfig:
 
 
 def create_chat_interface(
-    agent_task: Callable[..., Response | str | pd.DataFrame | go.Figure],
+    agent_task: Callable[..., Awaitable[Response | str | pd.DataFrame | go.Figure]],
     state: Any = None,
     config: ChatInterfaceConfig | None = None,
     turn_config: TurnConfig | None = None,

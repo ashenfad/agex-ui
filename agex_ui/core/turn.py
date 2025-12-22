@@ -8,7 +8,7 @@ and response rendering.
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -51,7 +51,7 @@ async def scroll_chat_to_bottom(chat_container: ui.column):
 async def run_agent_turn(
     chat_messages: ui.column,
     chat_input: ui.input,
-    agent_task: Callable[..., Response | str | pd.DataFrame | go.Figure],
+    agent_task: Callable[..., Awaitable[Response | str | pd.DataFrame | go.Figure]],
     prompt: str,
     state: Any = None,
     config: TurnConfig | None = None,
@@ -153,8 +153,7 @@ async def run_agent_turn(
         task_kwargs["state"] = state
 
     try:
-        result = await asyncio.to_thread(
-            agent_task,
+        result = await agent_task(
             prompt,
             **task_kwargs,
         )
@@ -162,6 +161,10 @@ async def run_agent_turn(
         result = e.message
     except TaskTimeout:
         result = "Sorry, I got stuck. Please try again."
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        result = f"An internal error occurred: {str(e)}"
 
     # Replace spinner with actual content
     with agent_message:
