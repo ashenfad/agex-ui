@@ -15,22 +15,27 @@ USER_CONTEXT = f"## User Context\n\n- Default timezone: {TZ}"
 PRIMER_PARTS = [
     PRIMER,
     USER_CONTEXT,
-    calgebra.docs["api"],
-    calgebra.docs["quick_start"],
-    calgebra.docs["gcsa"],
+    calgebra.docs.api,
+    calgebra.docs.quick_start,
+    calgebra.docs.gcsa,
 ]
 
 agent = Agent(
     name="cal",
     primer="\n\n".join(PRIMER_PARTS),
-    llm_client=connect_llm(provider="anthropic", model="claude-haiku-4-5"),
+    llm_client=connect_llm(
+        provider="gemini",
+        model="gemini-3-flash-preview",
+        google_search=True,
+        url_context=True
+    ),
     max_iterations=10,
-    timeout_seconds=15,
-    log_high_water_tokens=150000
+    eval_timeout_seconds=15,
+    log_high_water_tokens=100000
 )
 
 # persisted state so agent can learn
-state = Versioned(Disk("/tmp/agex-ui-cal"))
+state = Versioned(Disk("/tmp/agex-ui-cal2"))
 
 
 # Register calgebra
@@ -73,7 +78,7 @@ task_continue(f'Current date: {today}. Available calendars (by index):', cal_sum
 
 
 @agent.task(setup=SETUP_ACTION)
-def handle_prompt(prompt: str) -> Response:
+async def handle_prompt(prompt: str) -> Response:
     """
     Given a user prompt, take actions to modify the calendar if necessary.
     Then respond to the user via str, dataframe, or plotly figure.
