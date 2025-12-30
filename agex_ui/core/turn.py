@@ -209,8 +209,7 @@ async def run_agent_turn(
     if config.enable_token_streaming:
         task_kwargs["on_token"] = on_agent_token
         
-    if config.enable_token_streaming:
-        task_kwargs["on_token"] = on_agent_token
+
 
     try:
         result = await agent_task(
