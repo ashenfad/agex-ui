@@ -2,7 +2,7 @@
 
 from nicegui import ui, app
 
-from agex_ui.cal.agent import handle_prompt
+from agex_ui.cal.agent import handle_prompt, agent
 from agex_ui.core.turn import TurnConfig
 from agex_ui.templates.chat_interface import ChatInterfaceConfig, create_chat_interface
 
@@ -28,6 +28,7 @@ turn_config = TurnConfig(
 
 # Create the chat interface
 chat_messages, chat_input = create_chat_interface(
+    agent=agent,
     agent_task=handle_prompt,
     config=chat_config,
     turn_config=turn_config,

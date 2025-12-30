@@ -8,11 +8,15 @@ and response rendering.
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
+
+if TYPE_CHECKING:
+    from agex import Agent
 
 import pandas as pd
 import plotly.graph_objects as go
 from agex import TaskClarify, TaskFail, TaskTimeout, TaskCancelled
+from agex.state import Versioned
 from nicegui import ui
 
 from agex_ui.core.events import EventHandler
@@ -51,20 +55,19 @@ async def scroll_chat_to_bottom(chat_container: ui.column):
 async def run_agent_turn(
     chat_messages: ui.column,
     chat_input: ui.input,
+    agent: "Agent",
     agent_task: Callable[..., Awaitable[Response | str | pd.DataFrame | go.Figure]],
     prompt: str,
-    state: Any = None,
+    session: str = "default",
     config: TurnConfig | None = None,
     response_renderer: ResponseRenderer | None = None,
     event_renderer: EventRenderer | None = None,
-    agent_name: str = "Agent",
 ):
     """Execute one agent turn with configurable rendering.
     
     The core framework is agent-agnostic - it accepts any callable that:
     - Takes a prompt string as first positional arg
     - Accepts on_event and on_token callbacks (as keyword args)
-    - Optionally accepts state (as keyword arg)
     - Returns Response | str | pd.DataFrame | go.Figure (or raises TaskClarify/TaskFail/TaskTimeout)
     
     Examples define their own agents and pass the task function to this orchestrator.
@@ -72,13 +75,13 @@ async def run_agent_turn(
     Args:
         chat_messages: Chat messages container
         chat_input: Chat input field
+        agent: Agent instance for accessing state and metadata
         agent_task: Agent task function with signature (prompt: str, **kwargs) -> Response | str | ...
         prompt: User prompt string
-        state: Optional state object to pass to agent
+        session: Session identifier for state management (default: "default")
         config: Turn configuration (uses defaults if None)
         response_renderer: Custom response renderer (uses default if None)
         event_renderer: Custom event renderer (uses default if None)
-        agent_name: Agent name for display purposes
         
     This function coordinates:
     1. User message display
@@ -87,20 +90,77 @@ async def run_agent_turn(
     4. Response rendering
     5. Auto-scrolling
     """
+    # Derive state and agent name from agent instance
+    state = agent.state(session)
+    agent_name = agent.name
     config = config or TurnConfig()
     response_renderer = response_renderer or ResponseRenderer()
     event_renderer = event_renderer or EventRenderer()
 
     # Display user message
     with chat_messages:
-        ui.chat_message(
-            prompt,
-            sent=True,
-            name="You",
-            avatar="assets/human.png",
-            stamp=get_timestamp(),
-        ).classes("self-end")
+        # Wrap message in a container for proper button positioning
+        message_container = ui.column().classes("self-end relative group w-auto")
+        
+        with message_container:
+            user_message = ui.chat_message(
+                prompt,
+                sent=True,
+                name="You",
+                avatar="assets/human.png",
+                stamp=get_timestamp(),
+            )
+
     chat_input.value = ""  # Clear input immediately
+
+    # Capture state for potential revert (only if Versioned)
+    revert_commit: str | None = None
+    if isinstance(state, Versioned):
+        revert_commit = state.current_commit
+
+
+    async def undo_turn():
+        """Revert state to before this turn and remove UI elements."""
+        if isinstance(state, Versioned) and revert_commit:
+            if not state.revert_to(revert_commit):
+                ui.notify("Failed to revert state", type="negative")
+                return
+
+        # Restore input
+        chat_input.value = prompt
+        
+        # Truncate UI: finding this message container index and removing it + everything after
+        try:
+            # chat_messages is a ui.column. Its children are in .default_slot.children
+            # We urge caution accessing internal slots, but it's the standard way in NiceGUI 1.x
+            children = chat_messages.default_slot.children
+            try:
+                msg_index = children.index(message_container)
+            except ValueError:
+                # Message might not be found if something weird happened
+                return
+
+            # Collect elements to remove (inclusive of this message)
+            to_remove = children[msg_index:]
+            
+            # Remove them from the client
+            for element in to_remove:
+                chat_messages.remove(element)
+                
+        except Exception as e:
+            ui.notify(f"UI Clean error: {e}", type="warning")
+
+    # Add hidden undo button overlaying the user message (visible on hover)
+    if isinstance(state, Versioned) and revert_commit:
+        with message_container:
+            # Absolute positioning relative to the message container
+            # right-14 offsets for the avatar width (~56px) to position over the bubble edge
+            ui.button(
+                icon="undo", 
+                on_click=undo_turn
+            ).props("round flat size=xs color=grey-4").classes(
+                "absolute bottom-2 right-14 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm"
+            ).tooltip("Undo this turn")
 
     if config.auto_scroll:
         await scroll_chat_to_bottom(chat_messages)
@@ -149,8 +209,8 @@ async def run_agent_turn(
     if config.enable_token_streaming:
         task_kwargs["on_token"] = on_agent_token
         
-    if state is not None:
-        task_kwargs["state"] = state
+    if config.enable_token_streaming:
+        task_kwargs["on_token"] = on_agent_token
 
     try:
         result = await agent_task(
