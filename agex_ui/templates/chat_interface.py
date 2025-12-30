@@ -4,7 +4,10 @@ Provides a standard chat UI layout that can be customized via configuration.
 """
 
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
+
+if TYPE_CHECKING:
+    from agex import Agent
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -29,18 +32,20 @@ class ChatInterfaceConfig:
 
 
 def create_chat_interface(
+    agent: "Agent",
     agent_task: Callable[..., Awaitable[Response | str | pd.DataFrame | go.Figure]],
-    state: Any = None,
+    session: str = "default",
     config: ChatInterfaceConfig | None = None,
     turn_config: TurnConfig | None = None,
 ) -> tuple[ui.column, ui.input]:
     """Create a standard chat interface with proper layout.
     
     Args:
+        agent: Agent instance for accessing state and metadata
         agent_task: Agent task function that takes (prompt: str, **kwargs) and returns
                    Response | str | pd.DataFrame | go.Figure. The function should accept
-                   on_event, on_token, and state as keyword arguments.
-        state: Optional state object to pass to agent task
+                   on_event and on_token callbacks as keyword arguments.
+        session: Session identifier for state management (default: "default")
         config: Chat interface configuration (uses defaults if None)
         turn_config: Turn execution configuration (uses defaults if None)
         
@@ -49,11 +54,11 @@ def create_chat_interface(
         
     Example:
         >>> from agex_ui.templates import create_chat_interface
-        >>> from my_agent import handle_prompt, state
+        >>> from my_agent import agent, handle_prompt
         >>> 
         >>> chat_messages, chat_input = create_chat_interface(
+        ...     agent=agent,
         ...     agent_task=handle_prompt,
-        ...     state=state,
         ...     config=ChatInterfaceConfig(title="My App"),
         ... )
     """
@@ -127,11 +132,11 @@ def create_chat_interface(
             await run_agent_turn(
                 chat_messages=chat_messages,
                 chat_input=chat_input,
+                agent=agent,
                 agent_task=agent_task,
                 prompt=chat_input.value,
-                state=state,
+                session=session,
                 config=turn_config,
-                agent_name=config.agent_name,
             )
         finally:
             # Reset UI state to "ready"

@@ -89,8 +89,3 @@ async def handle_prompt(prompt: str) -> Response:
     - Figure: Plotly charts for visualizations
     """
     pass
-
-
-state = agent.state()
-for evt in events(state):
-    print(evt)
