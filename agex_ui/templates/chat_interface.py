@@ -115,7 +115,7 @@ def create_chat_interface(
             # This relies on the agent task object having a .cancel() method
             # which is true for agex.Task objects
             if hasattr(agent_task, "cancel"):
-                agent_task.cancel()
+                agent_task.cancel(session=session)
                 ui.notify("Cancelling task...", type="warning")
             return
 
