@@ -8,14 +8,14 @@ and response rendering.
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 
 if TYPE_CHECKING:
     from agex import Agent
 
 import pandas as pd
 import plotly.graph_objects as go
-from agex import TaskClarify, TaskFail, TaskTimeout, TaskCancelled
+from agex import TaskCancelled, TaskClarify, TaskFail, TaskTimeout
 from agex.state import Versioned
 from nicegui import ui
 
@@ -62,6 +62,7 @@ async def run_agent_turn(
     config: TurnConfig | None = None,
     response_renderer: ResponseRenderer | None = None,
     event_renderer: EventRenderer | None = None,
+    dark_mode: bool = False,
 ):
     """Execute one agent turn with configurable rendering.
 
@@ -82,6 +83,7 @@ async def run_agent_turn(
         config: Turn configuration (uses defaults if None)
         response_renderer: Custom response renderer (uses default if None)
         event_renderer: Custom event renderer (uses default if None)
+        dark_mode: Whether to use dark mode styling (default: False)
 
     This function coordinates:
     1. User message display
@@ -94,8 +96,8 @@ async def run_agent_turn(
     state = agent.state(session)
     agent_name = agent.name
     config = config or TurnConfig()
-    response_renderer = response_renderer or ResponseRenderer()
-    event_renderer = event_renderer or EventRenderer()
+    response_renderer = response_renderer or ResponseRenderer(dark_mode=dark_mode)
+    event_renderer = event_renderer or EventRenderer(dark_mode=dark_mode)
 
     # Display user message
     with chat_messages:
@@ -103,7 +105,7 @@ async def run_agent_turn(
         message_container = ui.column().classes("self-end relative group w-auto")
 
         with message_container:
-            user_message = ui.chat_message(
+            ui.chat_message(
                 prompt,
                 sent=True,
                 name="You",
@@ -180,6 +182,7 @@ async def run_agent_turn(
         loop=loop,
         expansion=current_expansion,
         show_setup_events=config.show_setup_events,
+        dark_mode=dark_mode,
     )
 
     # Event callback wrapper

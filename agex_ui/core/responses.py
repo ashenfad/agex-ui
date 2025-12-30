@@ -6,7 +6,6 @@ with custom response types.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go

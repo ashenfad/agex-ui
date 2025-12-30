@@ -1,12 +1,11 @@
 import logging
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from functools import lru_cache
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pandas as pd
 from calgebra import Interval
-from calgebra.gcsa import Event, calendars
+from calgebra.gcsa import Event
 from gcsa.google_calendar import GoogleCalendar
 
 

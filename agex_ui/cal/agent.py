@@ -1,7 +1,7 @@
 import calgebra
 import calgebra.gcsa as gcsa
 import calgebra.mutable as mutable
-from agex import Agent, Versioned, connect_llm, connect_state
+from agex import Agent, connect_llm, connect_state
 from agex.helpers import register_pandas, register_plotly, register_stdlib
 from calgebra.gcsa import Event
 
