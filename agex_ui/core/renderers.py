@@ -25,7 +25,7 @@ class ResponseRenderer:
 
     def render_text(self, text: str, container: ui.element | None = None):
         """Render markdown text.
-        
+
         Args:
             text: Markdown text to render
             container: Optional container element (uses current context if None)
@@ -37,11 +37,9 @@ class ResponseRenderer:
             with container:
                 markdown
 
-    def render_dataframe(
-        self, df: pd.DataFrame, container: ui.element | None = None
-    ):
+    def render_dataframe(self, df: pd.DataFrame, container: ui.element | None = None):
         """Render pandas DataFrame as table.
-        
+
         Args:
             df: DataFrame to render
             container: Optional container element (uses current context if None)
@@ -51,17 +49,17 @@ class ResponseRenderer:
             with container:
                 table
 
-    def render_plotly(
-        self, fig: go.Figure, container: ui.element | None = None
-    ):
+    def render_plotly(self, fig: go.Figure, container: ui.element | None = None):
         """Render Plotly figure.
-        
+
         Args:
             fig: Plotly figure to render
             container: Optional container element (uses current context if None)
         """
-        plot = ui.plotly(fig).classes("w-full h-96").style(
-            "width: 640px; min-height: 400px"
+        plot = (
+            ui.plotly(fig)
+            .classes("w-full h-96")
+            .style("width: 640px; min-height: 400px")
         )
         if container is not None:
             with container:
@@ -82,7 +80,7 @@ class ResponseRenderer:
 
     def render_response(self, response: str | pd.DataFrame | go.Figure | Response):
         """Render a complete response (handles mixed types).
-        
+
         Args:
             response: Can be a single type (str, DataFrame, Figure) or a Response object
         """
@@ -107,12 +105,12 @@ class EventRenderer:
         self, evt: OutputEvent
     ) -> tuple[list[go.Figure], list[Any]]:
         """Separate Plotly figures from other OutputEvent parts.
-        
+
         Args:
             evt: OutputEvent to process
-            
+
         Returns:
-            (plotly_figures, other_parts) where plotly_figures is a list of 
+            (plotly_figures, other_parts) where plotly_figures is a list of
             go.Figure objects and other_parts contains everything else
         """
         plotly_figures = []
@@ -136,7 +134,7 @@ class EventRenderer:
         self, evt: OutputEvent, plotly_figures: list[go.Figure]
     ):
         """Render an OutputEvent card with embedded Plotly figures.
-        
+
         Args:
             evt: The OutputEvent to render
             plotly_figures: List of Plotly figures to embed in the card

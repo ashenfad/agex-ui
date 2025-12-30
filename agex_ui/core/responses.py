@@ -15,44 +15,49 @@ import plotly.graph_objects as go
 @dataclass
 class ResponsePart:
     """Base class for all response parts."""
+
     pass
 
 
 @dataclass
 class TextPart(ResponsePart):
     """Text/markdown content."""
+
     content: str
 
 
 @dataclass
 class DataFramePart(ResponsePart):
     """Pandas DataFrame table."""
+
     df: pd.DataFrame
 
 
 @dataclass
 class PlotlyPart(ResponsePart):
     """Plotly figure visualization."""
+
     figure: go.Figure
 
 
 @dataclass
 class Response:
     """Multi-part response container.
-    
+
     Supports a flexible list of parts that can be:
     - Raw types: str, pd.DataFrame, go.Figure
     - ResponsePart subclasses: TextPart, DataFramePart, PlotlyPart
-    
+
     Example:
         >>> Response(parts=["Analysis complete", df, plotly_fig])
         >>> Response(parts=[TextPart("Status: OK"), DataFramePart(df)])
     """
+
     parts: list[ResponsePart | str | pd.DataFrame | go.Figure]
 
     def normalize(self) -> list[ResponsePart]:
         """Convert all parts to ResponsePart instances.
-        
+
         Raw types are automatically wrapped:
         - str → TextPart
         - pd.DataFrame → DataFramePart

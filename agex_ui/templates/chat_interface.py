@@ -20,7 +20,7 @@ from agex_ui.core.turn import TurnConfig, get_timestamp, run_agent_turn
 @dataclass
 class ChatInterfaceConfig:
     """Configuration for chat interface appearance and behavior."""
-    
+
     header_bg_color: str = "#5894c8"
     title: str = "Agex-UI"
     page_title: str = "Agex-UI"
@@ -39,7 +39,7 @@ def create_chat_interface(
     turn_config: TurnConfig | None = None,
 ) -> tuple[ui.column, ui.input]:
     """Create a standard chat interface with proper layout.
-    
+
     Args:
         agent: Agent instance for accessing state and metadata
         agent_task: Agent task function that takes (prompt: str, **kwargs) and returns
@@ -48,14 +48,14 @@ def create_chat_interface(
         session: Session identifier for state management (default: "default")
         config: Chat interface configuration (uses defaults if None)
         turn_config: Turn execution configuration (uses defaults if None)
-        
+
     Returns:
         (chat_messages, chat_input) - The main UI components
-        
+
     Example:
         >>> from agex_ui.templates import create_chat_interface
         >>> from my_agent import agent, handle_prompt
-        >>> 
+        >>>
         >>> chat_messages, chat_input = create_chat_interface(
         ...     agent=agent,
         ...     agent_task=handle_prompt,
@@ -81,8 +81,10 @@ def create_chat_interface(
         ui.label(config.title).classes("text-2xl")
 
     # Main content area
-    with ui.column().classes("w-full h-full p-4").style(
-        f"flex-grow: 1; width: {config.max_width};"
+    with (
+        ui.column()
+        .classes("w-full h-full p-4")
+        .style(f"flex-grow: 1; width: {config.max_width};")
     ):
         # Chat messages area
         chat_messages = (
@@ -91,7 +93,7 @@ def create_chat_interface(
             .style("height: 75vh; max-height: 75vh;")
             .props("id=chat-messages-container")
         )
-        
+
         with chat_messages:
             ui.chat_message(
                 config.greeting,
@@ -103,9 +105,9 @@ def create_chat_interface(
 
         # Chat input area at bottom
         with ui.row().classes("w-full items-center p-2 border-t"):
-            chat_input = ui.input(
-                placeholder="Type your request..."
-            ).classes("flex-grow")
+            chat_input = ui.input(placeholder="Type your request...").classes(
+                "flex-grow"
+            )
 
     # Handler for chat input
     async def handle_turn():
@@ -122,12 +124,12 @@ def create_chat_interface(
         # Otherwise treat as send
         if not chat_input.value.strip():
             return
-            
+
         # Update UI state to "running"
         chat_input.disable()
         send_button.props("icon=stop color=negative")
         send_button.tooltip("Stop generation")
-        
+
         try:
             await run_agent_turn(
                 chat_messages=chat_messages,
@@ -141,7 +143,7 @@ def create_chat_interface(
         finally:
             # Reset UI state to "ready"
             chat_input.enable()
-            send_button.props("icon=send color=primary") 
+            send_button.props("icon=send color=primary")
             send_button.tooltip("Send message")
             # Focus back on input
             chat_input.run_method("focus")
