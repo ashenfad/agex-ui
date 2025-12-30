@@ -12,7 +12,7 @@ from typing import Any, Awaitable, Callable
 
 import pandas as pd
 import plotly.graph_objects as go
-from agex import TaskClarify, TaskFail, TaskTimeout
+from agex import TaskClarify, TaskFail, TaskTimeout, TaskCancelled
 from nicegui import ui
 
 from agex_ui.core.events import EventHandler
@@ -161,6 +161,8 @@ async def run_agent_turn(
         result = e.message
     except TaskTimeout:
         result = "Sorry, I got stuck. Please try again."
+    except TaskCancelled:
+        result = "Task cancelled by user."
     except Exception as e:
         import traceback
         traceback.print_exc()
