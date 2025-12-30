@@ -103,21 +103,54 @@ def create_chat_interface(
             ).classes("flex-grow")
 
     # Handler for chat input
-    async def handle_chat_input():
-        """Handler for when user presses enter in the chat input."""
+    async def handle_turn():
+        """Handle turn execution (start or stop)."""
+        # If running, treat as stop button
+        if chat_input.props.get("disable"):
+            # This relies on the agent task object having a .cancel() method
+            # which is true for agex.Task objects
+            if hasattr(agent_task, "cancel"):
+                agent_task.cancel()
+                ui.notify("Cancelling task...", type="warning")
+            return
+
+        # Otherwise treat as send
         if not chat_input.value.strip():
             return
             
-        await run_agent_turn(
-            chat_messages=chat_messages,
-            chat_input=chat_input,
-            agent_task=agent_task,
-            prompt=chat_input.value,
-            state=state,
-            config=turn_config,
-            agent_name=config.agent_name,
+        # Update UI state to "running"
+        chat_input.disable()
+        send_button.props("icon=stop color=negative")
+        send_button.tooltip("Stop generation")
+        
+        try:
+            await run_agent_turn(
+                chat_messages=chat_messages,
+                chat_input=chat_input,
+                agent_task=agent_task,
+                prompt=chat_input.value,
+                state=state,
+                config=turn_config,
+                agent_name=config.agent_name,
+            )
+        finally:
+            # Reset UI state to "ready"
+            chat_input.enable()
+            send_button.props("icon=send color=primary") 
+            send_button.tooltip("Send message")
+            # Focus back on input
+            chat_input.run_method("focus")
+
+    # Add send/stop button next to input
+    with chat_input.parent_slot:  # pyright: ignore
+        send_button = (
+            ui.button(icon="send", on_click=handle_turn)
+            .props("round flat color=primary")
+            .classes("ml-2")
+            .tooltip("Send message")
         )
 
-    chat_input.on("keydown.enter", handle_chat_input)
+    # Bind enter key to same handler
+    chat_input.on("keydown.enter", handle_turn)
 
     return chat_messages, chat_input

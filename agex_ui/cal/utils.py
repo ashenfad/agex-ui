@@ -116,7 +116,6 @@ def _format_duration(start: int | None, end: int | None) -> str:
     return f"{seconds}s"
 
 
-@lru_cache(maxsize=1)
 def user_timezone() -> str:
     """Best-effort lookup of the authenticated user's default timezone."""
     try:

@@ -1,9 +1,8 @@
 import calgebra
 import calgebra.gcsa as gcsa
 import calgebra.mutable as mutable
-from agex import Agent, Versioned, connect_llm
+from agex import Agent, Versioned, connect_llm, connect_state, connect_host, events
 from agex.helpers import register_pandas, register_plotly, register_stdlib
-from agex.state.kv import Disk
 from calgebra.gcsa import Event
 
 from agex_ui.cal.primer import PRIMER
@@ -23,19 +22,21 @@ PRIMER_PARTS = [
 agent = Agent(
     name="cal",
     primer="\n\n".join(PRIMER_PARTS),
-    llm_client=connect_llm(
+    llm=connect_llm(
         provider="gemini",
         model="gemini-3-flash-preview",
         google_search=True,
         url_context=True
     ),
+    state=connect_state(
+        type="versioned",
+        storage="disk",
+        path="/tmp/agex/cal",
+    ),
     max_iterations=10,
     eval_timeout_seconds=15,
     log_high_water_tokens=100000
 )
-
-# persisted state so agent can learn
-state = Versioned(Disk("/tmp/agex-ui-cal2"))
 
 
 # Register calgebra
@@ -88,3 +89,8 @@ async def handle_prompt(prompt: str) -> Response:
     - Figure: Plotly charts for visualizations
     """
     pass
+
+
+state = agent.state()
+for evt in events(state):
+    print(evt)
