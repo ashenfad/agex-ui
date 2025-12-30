@@ -26,7 +26,7 @@ agent = Agent(
         provider="gemini",
         model="gemini-3-flash-preview",
         google_search=True,
-        url_context=True
+        url_context=True,
     ),
     state=connect_state(
         type="versioned",
@@ -35,7 +35,7 @@ agent = Agent(
     ),
     max_iterations=10,
     eval_timeout_seconds=15,
-    log_high_water_tokens=100000
+    log_high_water_tokens=100000,
 )
 
 

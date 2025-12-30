@@ -27,7 +27,7 @@ from agex_ui.core.responses import Response
 @dataclass
 class TurnConfig:
     """Configuration for agent turn execution."""
-    
+
     show_setup_events: bool = False
     enable_token_streaming: bool = True
     auto_scroll: bool = True
@@ -41,7 +41,7 @@ def get_timestamp() -> str:
 
 async def scroll_chat_to_bottom(chat_container: ui.column):
     """Scroll the chat container to the bottom.
-    
+
     Args:
         chat_container: Chat messages container element
     """
@@ -64,14 +64,14 @@ async def run_agent_turn(
     event_renderer: EventRenderer | None = None,
 ):
     """Execute one agent turn with configurable rendering.
-    
+
     The core framework is agent-agnostic - it accepts any callable that:
     - Takes a prompt string as first positional arg
     - Accepts on_event and on_token callbacks (as keyword args)
     - Returns Response | str | pd.DataFrame | go.Figure (or raises TaskClarify/TaskFail/TaskTimeout)
-    
+
     Examples define their own agents and pass the task function to this orchestrator.
-    
+
     Args:
         chat_messages: Chat messages container
         chat_input: Chat input field
@@ -82,7 +82,7 @@ async def run_agent_turn(
         config: Turn configuration (uses defaults if None)
         response_renderer: Custom response renderer (uses default if None)
         event_renderer: Custom event renderer (uses default if None)
-        
+
     This function coordinates:
     1. User message display
     2. Agent activity expansion setup
@@ -101,7 +101,7 @@ async def run_agent_turn(
     with chat_messages:
         # Wrap message in a container for proper button positioning
         message_container = ui.column().classes("self-end relative group w-auto")
-        
+
         with message_container:
             user_message = ui.chat_message(
                 prompt,
@@ -118,7 +118,6 @@ async def run_agent_turn(
     if isinstance(state, Versioned):
         revert_commit = state.current_commit
 
-
     async def undo_turn():
         """Revert state to before this turn and remove UI elements."""
         if isinstance(state, Versioned) and revert_commit:
@@ -128,7 +127,7 @@ async def run_agent_turn(
 
         # Restore input
         chat_input.value = prompt
-        
+
         # Truncate UI: finding this message container index and removing it + everything after
         try:
             # chat_messages is a ui.column. Its children are in .default_slot.children
@@ -142,11 +141,11 @@ async def run_agent_turn(
 
             # Collect elements to remove (inclusive of this message)
             to_remove = children[msg_index:]
-            
+
             # Remove them from the client
             for element in to_remove:
                 chat_messages.remove(element)
-                
+
         except Exception as e:
             ui.notify(f"UI Clean error: {e}", type="warning")
 
@@ -155,12 +154,13 @@ async def run_agent_turn(
         with message_container:
             # Absolute positioning relative to the message container
             # right-14 offsets for the avatar width (~56px) to position over the bubble edge
-            ui.button(
-                icon="undo", 
-                on_click=undo_turn
-            ).props("round flat size=xs color=grey-4").classes(
+            ui.button(icon="undo", on_click=undo_turn).props(
+                "round flat size=xs color=grey-4"
+            ).classes(
                 "absolute bottom-2 right-14 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm"
-            ).tooltip("Undo this turn")
+            ).tooltip(
+                "Undo this turn"
+            )
 
     if config.auto_scroll:
         await scroll_chat_to_bottom(chat_messages)
@@ -205,11 +205,9 @@ async def run_agent_turn(
     task_kwargs = {
         "on_event": on_agent_event,
     }
-    
+
     if config.enable_token_streaming:
         task_kwargs["on_token"] = on_agent_token
-        
-
 
     try:
         result = await agent_task(
@@ -224,6 +222,7 @@ async def run_agent_turn(
         result = "Task cancelled by user."
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         result = f"An internal error occurred: {str(e)}"
 

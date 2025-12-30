@@ -39,7 +39,7 @@ def _format_day(ts: int | None, zone: ZoneInfo, is_all_day: bool = False) -> str
     """
     if ts is None:
         return "—"
-    
+
     # Determine which datetime to use based on event type
     if is_all_day:
         # For all-day events, use UTC to avoid timezone shifts
@@ -47,21 +47,21 @@ def _format_day(ts: int | None, zone: ZoneInfo, is_all_day: bool = False) -> str
     else:
         # For timed events, convert to user's timezone
         dt = datetime.fromtimestamp(ts, tz=timezone.utc).astimezone(zone)
-    
+
     # Get today's date in the same timezone for comparison
     now = datetime.now(tz=zone if not is_all_day else timezone.utc)
     today = now.date()
     event_date = dt.date()
-    
+
     # Calculate day difference
     day_diff = (event_date - today).days
-    
+
     # Relative dates for today and tomorrow
     if day_diff == 0:
         return "Today"
     elif day_diff == 1:
         return "Tomorrow"
-    
+
     # Context-aware year display
     if event_date.year == today.year:
         # Current year: "Tue, Dec 7"
@@ -176,7 +176,7 @@ def intervals_to_dataframe(
     The resulting dataframe will have the following columns:
     - day: The day of the interval
     - time: The time of the interval
-    - duration: The duration of the interval (as a string)    
+    - duration: The duration of the interval (as a string)
     """
     zone = _resolve_zone(timezone_name)
     return pd.DataFrame(
@@ -197,4 +197,3 @@ def intervals_to_dataframe(
             for ivl in ivls
         ]
     )
-

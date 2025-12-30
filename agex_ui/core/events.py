@@ -18,11 +18,11 @@ from nicegui.elements.html import Html
 @dataclass
 class ActionStreamRenderer:
     """Handles token-by-token rendering of ActionEvents.
-    
+
     Accumulates streaming tokens (title, thinking, code) and renders them
     into an ActionEvent-style card that updates in real-time.
     """
-    
+
     title_parts: list[str] = field(default_factory=list)
     thinking_parts: list[str] = field(default_factory=list)
     code_parts: list[str] = field(default_factory=list)
@@ -55,18 +55,18 @@ class ActionStreamRenderer:
 @dataclass
 class EventHandler:
     """Coordinates event processing and UI updates.
-    
+
     Handles both complete events (OutputEvent, ActionEvent) and streaming
     tokens, scheduling UI updates on the main asyncio loop.
     """
-    
+
     loop: asyncio.AbstractEventLoop
     expansion: ui.expansion
     event_count: int = 0
     current_action_title: str = ""
     current_action: ActionStreamRenderer = field(default_factory=ActionStreamRenderer)
     show_setup_events: bool = False
-    
+
     def update_expansion_label(self):
         """Update the expansion header with current status."""
         label = "Agent Activity"
@@ -77,13 +77,17 @@ class EventHandler:
 
     def handle_event(self, evt: Event, renderer):
         """Process incoming agent events.
-        
+
         Args:
             evt: Event from the agent
             renderer: EventRenderer instance for rendering events
         """
         # Skip setup OutputEvents if configured (but show summary/checkpoint events)
-        if not self.show_setup_events and evt.source == "setup" and isinstance(evt, OutputEvent):
+        if (
+            not self.show_setup_events
+            and evt.source == "setup"
+            and isinstance(evt, OutputEvent)
+        ):
             return
 
         # Handle OutputEvents and SummaryEvents (ActionEvents handled via token streaming)
@@ -102,7 +106,7 @@ class EventHandler:
                     html_content = evt.as_html()
                     ui.html(html_content, sanitize=False).classes("w-full p-0 my-0")
                     return
-                
+
                 # Handle OutputEvents (with Plotly extraction)
                 # Extract Plotly figures from event parts
                 plotly_figures, other_parts = renderer.extract_plotly_figures(evt)
@@ -114,6 +118,7 @@ class EventHandler:
                 # Render other parts as HTML
                 if other_parts:
                     from agex.agent.events import OutputEvent as OutputEventClass
+
                     other_event = OutputEventClass(
                         agent_name=evt.agent_name,
                         parts=other_parts,
@@ -129,7 +134,7 @@ class EventHandler:
 
     def handle_token(self, token: object, agent_name: str = "agent"):
         """Process streaming tokens for real-time updates.
-        
+
         Args:
             token: Token object from agent streaming
             agent_name: Default agent name to use
@@ -203,6 +208,7 @@ class EventHandler:
 
             except Exception as e:
                 import traceback
+
                 traceback.print_exc()
 
         asyncio.run_coroutine_threadsafe(do_ui_update(), self.loop)
