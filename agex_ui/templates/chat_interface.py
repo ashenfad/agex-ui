@@ -1,10 +1,11 @@
 """Reusable chat interface template.
 
-Provides a standard chat UI layout that can be customized via configuration.
+Provides a standard chat UI layout that can be customized via configuration,
+including dark mode support.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 
 if TYPE_CHECKING:
     from agex import Agent
@@ -14,6 +15,7 @@ import plotly.graph_objects as go
 from nicegui import ui
 
 from agex_ui.core.responses import Response
+from agex_ui.core.theme import ThemeManager
 from agex_ui.core.turn import TurnConfig, get_timestamp, run_agent_turn
 
 
@@ -29,6 +31,7 @@ class ChatInterfaceConfig:
     robot_avatar: str = "assets/robot.png"
     human_avatar: str = "assets/human.png"
     agent_name: str = "Agex"
+    dark_mode: bool = False  # Start in dark mode if True
 
 
 def create_chat_interface(
@@ -37,8 +40,8 @@ def create_chat_interface(
     session: str = "default",
     config: ChatInterfaceConfig | None = None,
     turn_config: TurnConfig | None = None,
-) -> tuple[ui.column, ui.input]:
-    """Create a standard chat interface with proper layout.
+) -> tuple[ui.column, ui.input, ThemeManager]:
+    """Create a standard chat interface with proper layout and dark mode support.
 
     Args:
         agent: Agent instance for accessing state and metadata
@@ -50,35 +53,45 @@ def create_chat_interface(
         turn_config: Turn execution configuration (uses defaults if None)
 
     Returns:
-        (chat_messages, chat_input) - The main UI components
+        (chat_messages, chat_input, theme_manager) - The main UI components and theme manager
 
     Example:
         >>> from agex_ui.templates import create_chat_interface
         >>> from my_agent import agent, handle_prompt
         >>>
-        >>> chat_messages, chat_input = create_chat_interface(
+        >>> chat_messages, chat_input, theme = create_chat_interface(
         ...     agent=agent,
         ...     agent_task=handle_prompt,
-        ...     config=ChatInterfaceConfig(title="My App"),
+        ...     config=ChatInterfaceConfig(title="My App", dark_mode=True),
         ... )
     """
     config = config or ChatInterfaceConfig()
     turn_config = turn_config or TurnConfig()
 
-    # Configure main window
+    # Initialize theme manager and apply CSS
+    theme_manager = ThemeManager(dark_mode=config.dark_mode)
+    theme_manager.apply()
+
+    # Configure main window - use CSS variables for theming
     ui.query("body").style(
-        "background-color: #fcfcfc; display: flex; flex-direction: column; "
+        "background-color: var(--bg-primary); display: flex; flex-direction: column; "
         "align-items: center; height: 100vh; margin: 0;"
     )
     ui.page_title(config.page_title)
 
-    # Header
+    # Header with theme toggle
     with (
         ui.header(elevated=False)
         .style(f"background-color: {config.header_bg_color};")
         .classes("items-center justify-between")
     ):
         ui.label(config.title).classes("text-2xl")
+
+        # Spacer to push toggle to the right
+        ui.element("div").classes("flex-grow")
+
+        # Dark mode toggle button
+        theme_manager.create_toggle_button()
 
     # Main content area
     with (
@@ -139,6 +152,7 @@ def create_chat_interface(
                 prompt=chat_input.value,
                 session=session,
                 config=turn_config,
+                dark_mode=theme_manager.dark_mode,
             )
         finally:
             # Reset UI state to "ready"
@@ -160,4 +174,4 @@ def create_chat_interface(
     # Bind enter key to same handler
     chat_input.on("keydown.enter", handle_turn)
 
-    return chat_messages, chat_input
+    return chat_messages, chat_input, theme_manager

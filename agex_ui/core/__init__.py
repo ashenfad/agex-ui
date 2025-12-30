@@ -4,12 +4,13 @@ This package provides reusable components for building agent-driven UIs with age
 """
 
 from agex_ui.core.responses import (
+    DataFramePart,
+    PlotlyPart,
     Response,
     ResponsePart,
     TextPart,
-    DataFramePart,
-    PlotlyPart,
 )
+from agex_ui.core.theme import ThemeManager
 
 __all__ = [
     "Response",
@@ -17,4 +18,5 @@ __all__ = [
     "TextPart",
     "DataFramePart",
     "PlotlyPart",
+    "ThemeManager",
 ]

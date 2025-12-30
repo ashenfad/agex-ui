@@ -1,14 +1,16 @@
 """UI renderers for responses and events.
 
-This module handles converting agent responses and events into NiceGUI components.
+This module handles converting agent responses and events into NiceGUI components
+with theme-aware styling.
 """
 
+import html as html_escape
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
-from agex import OutputEvent
-from agex.eval.objects import ImageAction
 from nicegui import ui
 
 from agex_ui.core.responses import (
@@ -20,52 +22,83 @@ from agex_ui.core.responses import (
 )
 
 
-class ResponseRenderer:
-    """Renders response parts to NiceGUI components."""
+@dataclass
+class PartRenderer:
+    """Renders individual parts to NiceGUI components with theme support.
 
-    def render_text(self, text: str, container: ui.element | None = None):
-        """Render markdown text.
+    All render methods use CSS variables from theme.py for consistent styling.
+    """
 
-        Args:
-            text: Markdown text to render
-            container: Optional container element (uses current context if None)
-        """
-        markdown = ui.markdown(
+    def render_text(self, text: str):
+        """Render markdown text with theme-aware styling."""
+        ui.markdown(
             text, extras=["fenced-code-blocks", "tables", "cuddled-lists"]
+        ).classes("w-full").style("margin: 0;")
+
+    def render_dataframe(self, df: pd.DataFrame):
+        """Render pandas DataFrame as a themed table."""
+        ui.table.from_pandas(df).classes("w-full themed-table").style(
+            "margin-top: 0.75em; margin-bottom: 0.75em;"
         )
-        if container is not None:
-            with container:
-                markdown
 
-    def render_dataframe(self, df: pd.DataFrame, container: ui.element | None = None):
-        """Render pandas DataFrame as table.
+    def render_plotly(self, fig: go.Figure, dark_mode: bool = False):
+        """Render Plotly figure with both light and dark versions.
 
-        Args:
-            df: DataFrame to render
-            container: Optional container element (uses current context if None)
-        """
-        table = ui.table.from_pandas(df).classes("w-full")
-        if container is not None:
-            with container:
-                table
-
-    def render_plotly(self, fig: go.Figure, container: ui.element | None = None):
-        """Render Plotly figure.
+        Renders two versions of the chart and uses CSS to show/hide based on theme.
 
         Args:
             fig: Plotly figure to render
-            container: Optional container element (uses current context if None)
+            dark_mode: Initial theme (used for default visibility)
         """
-        plot = (
-            ui.plotly(fig)
-            .classes("w-full h-96")
-            .style("width: 640px; min-height: 400px")
-        )
-        if container is not None:
-            with container:
-                plot
+        import copy
 
-    def render_part(self, part: ResponsePart):
+        # Create deep copies for light and dark versions
+        fig_light = copy.deepcopy(fig)
+        fig_dark = copy.deepcopy(fig)
+
+        # Configure light version
+        if hasattr(fig_light, "update_layout"):
+            fig_light.update_layout(
+                template="plotly_white",
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#f6f8fa",
+                autosize=True,
+                width=None,
+                height=None,
+            )
+
+        # Configure dark version
+        if hasattr(fig_dark, "update_layout"):
+            fig_dark.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#161b22",
+                plot_bgcolor="#0d1117",
+                autosize=True,
+                width=None,
+                height=None,
+            )
+
+        # Render both versions with theme-aware visibility
+        with (
+            ui.element("div")
+            .classes("plotly-container")
+            .style("margin-top: 0.75em; margin-bottom: 0.75em;")
+        ):
+            # Light mode chart (hidden in dark mode)
+            ui.plotly(fig_light).classes("w-full h-96 plotly-light-mode").style(
+                "min-height: 400px; max-width: 100%;"
+            )
+            # Dark mode chart (hidden in light mode)
+            ui.plotly(fig_dark).classes("w-full h-96 plotly-dark-mode").style(
+                "min-height: 400px; max-width: 100%;"
+            )
+
+    def render_code(self, code: str, language: str = "python"):
+        """Render code with syntax highlighting using NiceGUI's code component."""
+        if code.strip():
+            ui.code(code, language=language).classes("w-full")
+
+    def render_part(self, part: ResponsePart | Any, dark_mode: bool = False):
         """Render a single response part based on its type."""
         match part:
             case TextPart(content=text):
@@ -73,10 +106,24 @@ class ResponseRenderer:
             case DataFramePart(df=df):
                 self.render_dataframe(df)
             case PlotlyPart(figure=fig):
-                self.render_plotly(fig)
+                self.render_plotly(fig, dark_mode=dark_mode)
+            case str():
+                self.render_text(part)
+            case pd.DataFrame():
+                self.render_dataframe(part)
+            case go.Figure():
+                self.render_plotly(part, dark_mode=dark_mode)
             case _:
                 # Fallback: render as text
                 self.render_text(str(part))
+
+
+class ResponseRenderer:
+    """Renders complete agent responses to NiceGUI components."""
+
+    def __init__(self, dark_mode: bool = False):
+        self.part_renderer = PartRenderer()
+        self.dark_mode = dark_mode
 
     def render_response(self, response: str | pd.DataFrame | go.Figure | Response):
         """Render a complete response (handles mixed types).
@@ -86,103 +133,131 @@ class ResponseRenderer:
         """
         match response:
             case Response():
-                # Render each part of a multi-part response
-                for part in response.normalize():
-                    self.render_part(part)
+                # Wrap all parts in a single container to eliminate gaps
+                with ui.element("div").style("margin: 0; padding: 0;"):
+                    # Merge consecutive text parts to avoid gaps between them
+                    normalized_parts = response.normalize()
+                    merged_parts = []
+                    text_buffer = []
+
+                    for part in normalized_parts:
+                        if isinstance(part, TextPart):
+                            # Accumulate consecutive text parts
+                            text_buffer.append(part.content)
+                        else:
+                            # Flush accumulated text before non-text part
+                            if text_buffer:
+                                merged_parts.append(
+                                    TextPart(content="\n\n".join(text_buffer))
+                                )
+                                text_buffer = []
+                            merged_parts.append(part)
+
+                    # Flush any remaining text
+                    if text_buffer:
+                        merged_parts.append(TextPart(content="\n\n".join(text_buffer)))
+
+                    # Render merged parts
+                    for part in merged_parts:
+                        self.part_renderer.render_part(part, dark_mode=self.dark_mode)
             case pd.DataFrame():
-                self.render_dataframe(response)
+                self.part_renderer.render_dataframe(response)
             case go.Figure():
-                self.render_plotly(response)
+                self.part_renderer.render_plotly(response, dark_mode=self.dark_mode)
             case _:
                 # Assume it's text/string-like
-                self.render_text(str(response))
+                self.part_renderer.render_text(str(response))
 
 
 class EventRenderer:
-    """Renders agex events to HTML/UI components."""
+    """Renders agex events to themed NiceGUI components.
 
-    def extract_plotly_figures(
-        self, evt: OutputEvent
-    ) -> tuple[list[go.Figure], list[Any]]:
-        """Separate Plotly figures from other OutputEvent parts.
+    Handles ActionEvent rendering with themed styling.
+    """
 
-        Args:
-            evt: OutputEvent to process
+    def __init__(self, dark_mode: bool = False):
+        self.dark_mode = dark_mode
 
-        Returns:
-            (plotly_figures, other_parts) where plotly_figures is a list of
-            go.Figure objects and other_parts contains everything else
+    def render_action_event(
+        self,
+        agent_name: str,
+        full_namespace: str,
+        timestamp: datetime | None,
+        title: str,
+        thinking: str,
+        code: str,
+        dark_mode: bool = False,
+    ) -> str:
+        """Generate HTML for an ActionEvent card.
+
+        Returns HTML string for use with ui.html().
         """
-        plotly_figures = []
-        other_parts = []
-
-        for part in evt.parts:
-            if isinstance(part, ImageAction):
-                # Check if the image is a Plotly figure
-                if hasattr(part.image, "to_image") and callable(
-                    getattr(part.image, "to_image", None)
-                ):
-                    plotly_figures.append(part.image)
-                else:
-                    other_parts.append(part)
-            else:
-                other_parts.append(part)
-
-        return plotly_figures, other_parts
-
-    def render_output_event_with_plotly(
-        self, evt: OutputEvent, plotly_figures: list[go.Figure]
-    ):
-        """Render an OutputEvent card with embedded Plotly figures.
-
-        Args:
-            evt: The OutputEvent to render
-            plotly_figures: List of Plotly figures to embed in the card
-        """
-        import html as html_escape
-
         formatted_timestamp = (
-            evt.timestamp.replace(microsecond=0).isoformat().replace("+00:00", "Z")
-            if evt.timestamp
+            timestamp.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+            if timestamp
             else ""
         )
-        metadata_line = formatted_timestamp
-        if evt.commit_hash:
-            metadata_line += f' • <code style="background: #f1f3f4; padding: 1px 4px; border-radius: 2px; font-family: monospace; font-size: 11px;">{evt.commit_hash[:8]}</code>'
 
-        # Create card container matching OutputEvent.as_html() structure
-        with (
-            ui.card()
-            .classes("w-full")
-            .style(
-                "border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px; margin: 8px 0; background: #f6f8fa;"
+        # Escape content
+        escaped_title = html_escape.escape(title) if title else "(processing...)"
+        escaped_code = html_escape.escape(code) if code else ""
+        escaped_namespace = html_escape.escape(full_namespace or agent_name)
+
+        thinking_section = ""
+        if thinking:
+            # Render thinking as markdown with relaxed list rules
+            import markdown
+
+            thinking_html = markdown.markdown(
+                thinking, extensions=["fenced_code", "tables", "nl2br", "sane_lists"]
             )
-        ):
-            # Header matching OutputEvent structure
-            ui.html(
-                f"""
-                <div style="font-weight: 600; color: #24292e; margin-bottom: 8px; font-size: 14px;">
-                    🤖 OutputEvent - {html_escape.escape(evt.full_namespace or evt.agent_name)}
-                </div>
-                <div style="font-size: 12px; color: #6a737d; margin-bottom: 12px;">
-                    {metadata_line}
-                </div>
-                <div style="border-left: 3px solid #6f42c1; padding-left: 10px; margin: 5px 0;">
-                    <h4 style="margin: 0 0 5px 0; font-size: 1em; color: #6f42c1;">📤 Output:</h4>
-                </div>
-                """,
-                sanitize=False,
-            ).classes("w-full p-0 my-0")
+            thinking_section = f"""
+            <div class="themed-thinking">
+                <div style="margin-top: 4px;">{thinking_html}</div>
+            </div>
+            """
 
-            # Render each Plotly figure
-            for fig in plotly_figures:
-                # Update figure layout to be responsive
-                if hasattr(fig, "update_layout"):
-                    fig.update_layout(
-                        autosize=True,
-                        width=None,
-                        height=None,
-                    )
-                ui.plotly(fig).classes("w-full h-96").style(
-                    "width: 640px; min-height: 400px"
+        code_section = ""
+        if escaped_code:
+            # Use Pygments for syntax highlighting
+            try:
+                from pygments import highlight
+                from pygments.formatters import HtmlFormatter
+                from pygments.lexers import PythonLexer
+
+                # Use theme-appropriate style
+                style = "solarized-dark" if dark_mode else "solarized-light"
+                formatter = HtmlFormatter(
+                    style=style,
+                    noclasses=True,
+                    nobackground=True,  # Transparent background
+                    cssclass="highlighted-code",
                 )
+
+                # Highlight the code (use unescaped code for Pygments)
+                highlighted = highlight(code, PythonLexer(), formatter)
+
+                code_section = f"""
+                <div style="margin-top: 8px;">
+                    <div style="margin-top: 4px; padding: 12px; border: 1px solid var(--border-default); border-radius: 6px; overflow-x: auto;">{highlighted}</div>
+                </div>
+                """
+            except ImportError:
+                # Fallback if Pygments isn't available
+                code_section = f"""
+                <div style="margin-top: 8px;">
+                    <pre class="themed-code" style="margin-top: 4px; margin-bottom: 0;"><code>{escaped_code}</code></pre>
+                </div>
+                """
+
+        return f"""
+        <div class="themed-event-card">
+            <div class="themed-event-header">
+                ⚡ ActionEvent — {escaped_namespace}
+            </div>
+            <div class="themed-event-meta">{formatted_timestamp}</div>
+            <div style="font-weight: 500; margin-bottom: 8px;">{escaped_title}</div>
+            {thinking_section}
+            {code_section}
+        </div>
+        """

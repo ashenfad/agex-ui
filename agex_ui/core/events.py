@@ -7,12 +7,13 @@ during agent execution.
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable
 
-from agex import ActionEvent, Event, OutputEvent, SummaryEvent
+from agex import Event, OutputEvent, SummaryEvent
 from agex.llm.core import StreamToken
 from nicegui import ui
 from nicegui.elements.html import Html
+
+from agex_ui.core.renderers import EventRenderer
 
 
 @dataclass
@@ -30,19 +31,23 @@ class ActionStreamRenderer:
     agent_name: str = ""
     full_namespace: str = ""
     timestamp: datetime | None = None
+    event_renderer: EventRenderer | None = None
 
     def render_html(self) -> str:
-        """Generate HTML for current action state."""
+        """Generate HTML for current action state using themed renderer."""
         fallback_name = self.agent_name or "agent"
         fallback_namespace = self.full_namespace or fallback_name
-        return ActionEvent(
+
+        renderer = self.event_renderer or EventRenderer()
+        return renderer.render_action_event(
             agent_name=fallback_name,
             full_namespace=fallback_namespace,
             timestamp=self.timestamp or datetime.now(),
             title="".join(self.title_parts).strip(),
             thinking="".join(self.thinking_parts),
             code="".join(self.code_parts),
-        )._repr_html_()
+            dark_mode=renderer.dark_mode,
+        )
 
     def reset(self):
         """Clear accumulated state for a new action."""
@@ -66,6 +71,12 @@ class EventHandler:
     current_action_title: str = ""
     current_action: ActionStreamRenderer = field(default_factory=ActionStreamRenderer)
     show_setup_events: bool = False
+    dark_mode: bool = False
+
+    def __post_init__(self):
+        """Initialize the event renderer after dataclass init."""
+        self.event_renderer = EventRenderer(dark_mode=self.dark_mode)
+        self.current_action.event_renderer = self.event_renderer
 
     def update_expansion_label(self):
         """Update the expansion header with current status."""
@@ -75,12 +86,12 @@ class EventHandler:
         label = f"{label} ({self.event_count} events)"
         self.expansion.text = label
 
-    def handle_event(self, evt: Event, renderer):
+    def handle_event(self, evt: Event, renderer: EventRenderer | None = None):
         """Process incoming agent events.
 
         Args:
             evt: Event from the agent
-            renderer: EventRenderer instance for rendering events
+            renderer: EventRenderer instance for rendering events (optional)
         """
         # Skip setup OutputEvents if configured (but show summary/checkpoint events)
         if (
@@ -90,8 +101,13 @@ class EventHandler:
         ):
             return
 
-        # Handle OutputEvents and SummaryEvents (ActionEvents handled via token streaming)
-        if not isinstance(evt, (OutputEvent, SummaryEvent)):
+        # Skip all OutputEvents from the expansion panel (they're shown in the final response)
+        # Only show SummaryEvents in the agent activity
+        if isinstance(evt, OutputEvent):
+            return
+
+        # Handle SummaryEvents (ActionEvents handled via token streaming)
+        if not isinstance(evt, SummaryEvent):
             return
 
         async def do_ui_update():
@@ -101,33 +117,14 @@ class EventHandler:
             self.update_expansion_label()
 
             with self.expansion:
-                # Render SummaryEvents directly with their HTML
-                if isinstance(evt, SummaryEvent):
-                    html_content = evt.as_html()
-                    ui.html(html_content, sanitize=False).classes("w-full p-0 my-0")
-                    return
-
-                # Handle OutputEvents (with Plotly extraction)
-                # Extract Plotly figures from event parts
-                plotly_figures, other_parts = renderer.extract_plotly_figures(evt)
-
-                # Render Plotly figures with custom card
-                if plotly_figures:
-                    renderer.render_output_event_with_plotly(evt, plotly_figures)
-
-                # Render other parts as HTML
-                if other_parts:
-                    from agex.agent.events import OutputEvent as OutputEventClass
-
-                    other_event = OutputEventClass(
-                        agent_name=evt.agent_name,
-                        parts=other_parts,
-                        timestamp=evt.timestamp,
-                        full_namespace=evt.full_namespace,
-                        commit_hash=evt.commit_hash,
+                # Render SummaryEvents with themed styling
+                with ui.element("div").classes("themed-event-card"):
+                    ui.html(
+                        f"""
+                        <div class="themed-event-header">📊 Summary</div>
+                        <div>{evt.as_html()}</div>
+                    """
                     )
-                    html_content = other_event.as_html()
-                    ui.html(html_content, sanitize=False).classes("w-full p-0 my-0")
 
         # Schedule on main loop from background thread
         asyncio.run_coroutine_threadsafe(do_ui_update(), self.loop)
@@ -153,6 +150,7 @@ class EventHandler:
                         token.full_namespace or self.current_action.agent_name
                     )
                     self.current_action.timestamp = token.timestamp
+                    self.current_action.event_renderer = self.event_renderer
 
                     # Set initial title based on which section we're starting with
                     if token.type == "title":
@@ -163,18 +161,17 @@ class EventHandler:
                         initial_title = "(coding...)"
 
                     with self.expansion:
+                        # Create initial card with themed HTML
+                        initial_html = self.event_renderer.render_action_event(
+                            agent_name=self.current_action.agent_name,
+                            full_namespace=self.current_action.full_namespace,
+                            timestamp=self.current_action.timestamp,
+                            title=initial_title,
+                            thinking="",
+                            code="",
+                        )
                         self.current_action.card = (
-                            ui.html(
-                                ActionEvent(
-                                    agent_name=self.current_action.agent_name,
-                                    full_namespace=self.current_action.full_namespace,
-                                    timestamp=self.current_action.timestamp,
-                                    title=initial_title,
-                                    thinking="",
-                                    code="",
-                                )._repr_html_(),
-                                sanitize=False,
-                            )
+                            ui.html(initial_html, sanitize=False)
                             .classes("w-full p-0 my-0")
                             .style("transition: opacity 120ms ease-in")
                         )
@@ -206,7 +203,7 @@ class EventHandler:
                     # Clear card reference so next title starts fresh
                     self.current_action.card = None
 
-            except Exception as e:
+            except Exception:
                 import traceback
 
                 traceback.print_exc()
