@@ -33,7 +33,7 @@ THEME_CSS = """
 }
 
 [data-theme="dark"] {
-    --bg-primary: #0d1117;
+    --bg-primary: #1d2127;
     --bg-secondary: #161b22;
     --bg-tertiary: #21262d;
     --bg-card: #161b22;
@@ -190,7 +190,7 @@ body {
     margin: 8px 0;
 }
 
-/* Chat message overrides for dark mode - keep agent bubbles light blue like in light mode */
+/* Chat message overrides for dark mode */
 [data-theme="dark"] .q-message-text {
     background-color: #5894c8 !important;
     color: #24292e !important;
@@ -202,13 +202,13 @@ body {
 }
 
 [data-theme="dark"] .q-message-text--sent {
-    background-color: #5f7f5f !important;
+    background-color: #5f9f7f !important;
     color: #ffffff !important;
 }
 
 /* Fix bubble tip (arrow) for sent messages */
 [data-theme="dark"] .q-message-text--sent::before {
-    border-bottom-color: #5f7f5f !important;
+    border-bottom-color: #5f9f7f !important;
 }
 
 /* Agent name and timestamp */
@@ -229,6 +229,12 @@ body {
 
 [data-theme="dark"] .q-expansion-item__container {
     background-color: var(--bg-secondary) !important;
+    border-radius: 7px;
+}
+
+/* Ensure hover highlight respects rounded corners */
+[data-theme="dark"] .q-expansion-item .q-item {
+    border-radius: 7px;
 }
 
 [data-theme="dark"] .q-item__label {
