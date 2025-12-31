@@ -14,6 +14,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from nicegui import ui
 
+from agex_ui.core.history import restore_chat_history
 from agex_ui.core.responses import Response
 from agex_ui.core.theme import ThemeManager
 from agex_ui.core.turn import TurnConfig, get_timestamp, run_agent_turn
@@ -31,7 +32,7 @@ class ChatInterfaceConfig:
     robot_avatar: str = "assets/robot.png"
     human_avatar: str = "assets/human.png"
     agent_name: str = "Agex"
-    dark_mode: bool = False  # Start in dark mode if True
+    dark_mode: bool = True  # Start in dark mode by default
 
 
 def create_chat_interface(
@@ -173,5 +174,23 @@ def create_chat_interface(
 
     # Bind enter key to same handler
     chat_input.on("keydown.enter", handle_turn)
+
+    # Restore chat history from state events
+    restore_chat_history(
+        chat_messages=chat_messages,
+        agent=agent,
+        session=session,
+        dark_mode=theme_manager.dark_mode,
+        collapse_actions=turn_config.collapse_agent_activity,
+    )
+
+    # Scroll to bottom after history loads (with delay for DOM to update)
+    ui.timer(
+        0.2,
+        lambda: ui.run_javascript(
+            "document.getElementById('chat-messages-container').scrollTop = 999999"
+        ),
+        once=True,
+    )
 
     return chat_messages, chat_input, theme_manager
