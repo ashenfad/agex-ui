@@ -64,6 +64,11 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Responsive content container - use vw to avoid parent-based sizing issues */
+.content-container {
+    width: min(calc(100vw - 32px), 1000px);
+}
+
 /* Remove spacing between markdown elements in chat bubbles */
 .q-message-text p,
 .q-message-text .markdown p {
@@ -173,7 +178,17 @@ body {
     font-size: 13px;
     overflow-x: auto;
     white-space: pre-wrap;
+    word-break: break-word;
     color: var(--text-primary);
+    max-width: 100%;
+}
+
+/* Pygments highlighted code - constrain width */
+.highlight, .highlight pre {
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 /* Inline code styling (backticks) */
@@ -242,6 +257,11 @@ code:not(pre code) {
 [data-theme="dark"] .q-expansion-item__container {
     background-color: var(--bg-secondary) !important;
     border-radius: 7px;
+}
+
+/* Allow horizontal scroll for long code in expansions */
+.q-expansion-item__content {
+    overflow-x: auto;
 }
 
 /* Compact expansion panel header - both modes */

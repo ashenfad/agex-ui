@@ -97,11 +97,7 @@ def create_chat_interface(
 
     # Main content area
     with (
-        ui.column()
-        # .classes("w-full h-full p-4")
-        .classes("w-full h-full px-4 pb-1").style(
-            f"flex-grow: 1; width: {config.max_width};"
-        )
+        ui.column().classes("content-container h-full px-4 pb-1").style("flex-grow: 1;")
     ):
         # Chat messages area
         chat_messages = (
