@@ -37,9 +37,14 @@ class PartRenderer:
 
     def render_dataframe(self, df: pd.DataFrame):
         """Render pandas DataFrame as a themed table."""
-        ui.table.from_pandas(df).classes("w-full themed-table").style(
-            "margin-top: 0.75em; margin-bottom: 0.75em;"
-        )
+        with (
+            ui.element("div")
+            .classes("w-full overflow-x-auto")
+            .style("margin-top: 0.75em; margin-bottom: 0.75em;")
+        ):
+            ui.table.from_pandas(df).classes("w-full themed-table").style(
+                "min-width: 0"
+            ).props("auto-width wrap-cells flat bordered")
 
     def render_plotly(self, fig: go.Figure, dark_mode: bool = False):
         """Render Plotly figure with both light and dark versions.
@@ -82,7 +87,9 @@ class PartRenderer:
         with (
             ui.element("div")
             .classes("plotly-container")
-            .style("margin-top: 0.75em; margin-bottom: 0.75em;")
+            .style(
+                "overflow-x: auto; max-width: 100%; margin-top: 0.75em; margin-bottom: 0.75em;"
+            )
         ):
             # Light mode chart (hidden in dark mode)
             ui.plotly(fig_light).classes("w-full h-96 plotly-light-mode").style(

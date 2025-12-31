@@ -82,10 +82,10 @@ def create_chat_interface(
     # Header with theme toggle
     with (
         ui.header(elevated=False)
-        # .style(f"background-color: {config.header_bg_color};")
         .style(
             f"background-color: {config.header_bg_color}; min-height: 40px; padding: 4px 16px;"
-        ).classes("items-center justify-between")
+        )
+        .classes("items-center justify-between")
     ):
         ui.label(config.title).classes("text-lg font-medium")
 
@@ -103,7 +103,7 @@ def create_chat_interface(
         chat_messages = (
             ui.column()
             .classes("w-full overflow-auto p-2")
-            .style("height: 82vh; max-height: 82vh;")
+            .style("height: 82vh; max-height: 82vh; max-width: 100%;")
             .props("id=chat-messages-container")
         )
 

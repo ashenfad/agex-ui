@@ -22,6 +22,7 @@ from agex.state import Versioned
 from nicegui import ui
 
 from agex_ui.core.renderers import EventRenderer, ResponseRenderer
+from agex_ui.core.utils import clear_chat_until
 
 
 def _format_timestamp(dt: datetime | None) -> str:
@@ -90,19 +91,10 @@ def _render_user_message(
                     return
 
                 # Remove this message container and everything after it
-                try:
-                    children = chat_messages.default_slot.children
-                    try:
-                        msg_index = children.index(message_container)
-                    except ValueError:
-                        return
-
-                    to_remove = children[msg_index:]
-                    for element in to_remove:
-                        chat_messages.remove(element)
-
-                except Exception as e:
-                    ui.notify(f"UI Clean error: {e}", type="warning")
+                if not clear_chat_until(chat_messages, message_container):
+                    ui.notify(
+                        "UI Clean error: Message container not found", type="warning"
+                    )
 
             with message_container:
                 ui.button(icon="undo", on_click=undo_to_commit).props(
@@ -257,9 +249,22 @@ def restore_chat_history(
         elif isinstance(event, ActionEvent):
             current_actions.append(event)
 
-        elif isinstance(event, SuccessEvent):
+        elif isinstance(event, (SuccessEvent, FailEvent, ClarifyEvent, CancelledEvent)):
             if current_task_start is not None:
-                # Render complete task
+                # Determine message and style based on event type
+                message = ""
+                is_error = False
+
+                if isinstance(event, SuccessEvent):
+                    message = event.result
+                elif isinstance(event, (FailEvent, ClarifyEvent)):
+                    message = event.message
+                    is_error = isinstance(event, FailEvent)
+                elif isinstance(event, CancelledEvent):
+                    message = "Task was cancelled."
+                    is_error = True
+
+                # Render complete task interaction
                 prompt = current_task_start.inputs.get("prompt", "")
                 _render_user_message(
                     chat_messages,
@@ -273,65 +278,14 @@ def restore_chat_history(
                 )
                 _render_agent_response(
                     chat_messages,
-                    event.result,
+                    message,
                     event.timestamp,
                     agent_name,
                     response_renderer,
+                    is_error=is_error,
                 )
 
             # Reset for next task
-            current_task_start = None
-            current_actions = []
-            revert_commit = None
-
-        elif isinstance(event, (FailEvent, ClarifyEvent)):
-            if current_task_start is not None:
-                prompt = current_task_start.inputs.get("prompt", "")
-                _render_user_message(
-                    chat_messages,
-                    prompt,
-                    current_task_start.timestamp,
-                    state,
-                    revert_commit,
-                )
-                _render_action_events(
-                    chat_messages, current_actions, event_renderer, collapse_actions
-                )
-                _render_agent_response(
-                    chat_messages,
-                    event.message,
-                    event.timestamp,
-                    agent_name,
-                    response_renderer,
-                    is_error=isinstance(event, FailEvent),
-                )
-
-            current_task_start = None
-            current_actions = []
-            revert_commit = None
-
-        elif isinstance(event, CancelledEvent):
-            if current_task_start is not None:
-                prompt = current_task_start.inputs.get("prompt", "")
-                _render_user_message(
-                    chat_messages,
-                    prompt,
-                    current_task_start.timestamp,
-                    state,
-                    revert_commit,
-                )
-                _render_action_events(
-                    chat_messages, current_actions, event_renderer, collapse_actions
-                )
-                _render_agent_response(
-                    chat_messages,
-                    "Task was cancelled.",
-                    event.timestamp,
-                    agent_name,
-                    response_renderer,
-                    is_error=True,
-                )
-
             current_task_start = None
             current_actions = []
             revert_commit = None
