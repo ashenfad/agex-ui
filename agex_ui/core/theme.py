@@ -34,7 +34,7 @@ THEME_CSS = """
 
 [data-theme="dark"] {
     --bg-primary: #1d2127;
-    --bg-secondary: #191e25;
+    --bg-secondary: #151a20;
     --bg-tertiary: #20252c;
     --bg-card: #161b22;
     --bg-code: #282f38;
@@ -70,7 +70,6 @@ body {
 
 /* Allow chat bubble content to scroll if too wide */
 .q-message-text {
-    overflow-x: auto;
     max-width: 100%;
 }
 

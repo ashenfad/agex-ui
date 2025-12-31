@@ -186,7 +186,13 @@ async def run_agent_turn(
             .props("bg-color=blue-2") as agent_message
         ):
             with ui.row().classes("items-center"):
-                ui.spinner(size="sm", type="dots")
+                spinner = ui.spinner(size="sm", type="dots")
+                # In dark mode, agent bubble is a medium blue (#5894c8)
+                # We need a dark spinner (#24292e) to match the text
+                if dark_mode:
+                    spinner.props('color="dark"')
+                else:
+                    spinner.props('color="primary"')
 
     # Run the agent task in a background thread
     task_kwargs = {

@@ -83,7 +83,6 @@ class EventHandler:
         label = "Activity"
         if self.current_action_title:
             label = f"{label} — {self.current_action_title}"
-        label = f"{label} ({self.event_count} events)"
         self.expansion.text = label
 
     def handle_event(self, evt: Event, renderer: EventRenderer | None = None):

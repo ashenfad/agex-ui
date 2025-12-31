@@ -3,7 +3,7 @@
 This module reconstructs the chat UI from historic events stored in agex state.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -47,18 +47,14 @@ def _format_timestamp(dt: datetime | None) -> str:
 
     if msg_date == today:
         return time_str_with_sec
-    elif msg_date == today.replace(day=today.day - 1) if today.day > 1 else False:
-        return f"Yesterday, {time_str}"
-    else:
-        # Check if yesterday using timedelta for month boundaries
-        from datetime import timedelta
 
-        yesterday = today - timedelta(days=1)
-        if msg_date == yesterday:
-            return f"Yesterday, {time_str}"
-        else:
-            date_str = local_dt.strftime("%b %-d")
-            return f"{date_str}, {time_str}"
+    # Check if yesterday using timedelta for month boundaries
+    yesterday = today - timedelta(days=1)
+    if msg_date == yesterday:
+        return f"Yesterday, {time_str}"
+
+    date_str = local_dt.strftime("%b %-d")
+    return f"{date_str}, {time_str}"
 
 
 def _render_user_message(
