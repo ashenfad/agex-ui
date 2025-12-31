@@ -34,16 +34,17 @@ THEME_CSS = """
 
 [data-theme="dark"] {
     --bg-primary: #1d2127;
-    --bg-secondary: #161b22;
-    --bg-tertiary: #21262d;
+    --bg-secondary: #191e25;
+    --bg-tertiary: #20252c;
     --bg-card: #161b22;
     --bg-code: #1f2428;
 
     --text-primary: #c9d1d9;
-    --text-secondary: #8b949e;
+    --text-secondary: #6b747e;
     --text-muted: #6e7681;
 
-    --border-default: #30363d;
+    --border-default: #22282f;
+    /* --border-default: #30363d; */
     --border-strong: #484f58;
 
     --accent-primary: #58a6ff;
@@ -142,7 +143,7 @@ body {
 
 /* Themed event card (for ActionEvent/OutputEvent) */
 .themed-event-card {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-tertiary);
     border: 1px solid var(--border-default);
     border-radius: 8px;
     padding: 16px;
@@ -175,13 +176,24 @@ body {
     color: var(--text-primary);
 }
 
+/* Inline code styling (backticks) */
+code:not(pre code) {
+    background-color: var(--bg-code);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.9em;
+    color: var(--accent-primary);
+}
+
 /* Themed action sections */
 .themed-thinking {
     border-left: 3px solid var(--accent-secondary);
-    padding-left: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
     margin: 8px 0;
     color: var(--text-secondary);
-    font-style: italic;
 }
 
 .themed-output {
@@ -202,13 +214,13 @@ body {
 }
 
 [data-theme="dark"] .q-message-text--sent {
-    background-color: #5f9f7f !important;
+    background-color: #8f8f8f !important;
     color: #ffffff !important;
 }
 
 /* Fix bubble tip (arrow) for sent messages */
 [data-theme="dark"] .q-message-text--sent::before {
-    border-bottom-color: #5f9f7f !important;
+    border-bottom-color: #8f8f8f !important;
 }
 
 /* Agent name and timestamp */
@@ -232,13 +244,20 @@ body {
     border-radius: 7px;
 }
 
+/* Compact expansion panel header - both modes */
+.q-expansion-item .q-item {
+    min-height: 30px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
 /* Ensure hover highlight respects rounded corners */
 [data-theme="dark"] .q-expansion-item .q-item {
     border-radius: 7px;
 }
 
 [data-theme="dark"] .q-item__label {
-    color: var(--text-primary) !important;
+    color: var(--text-secondary) !important;
 }
 
 /* Table theming */
@@ -260,6 +279,8 @@ body {
 [data-theme="dark"] .q-field__control {
     background-color: var(--bg-tertiary) !important;
     color: var(--text-primary) !important;
+    padding-left: 8px;
+    border-radius: 8px;
 }
 
 [data-theme="dark"] .q-field__native {

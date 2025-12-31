@@ -14,7 +14,6 @@ chat_config = ChatInterfaceConfig(
     title="Calendar Assistant",
     page_title="Cal - Agex UI",
     greeting="Hello! I can help you manage your Google Calendar.",
-    agent_name="Cal",
     max_width="1000px",
 )
 

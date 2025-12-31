@@ -80,7 +80,7 @@ class EventHandler:
 
     def update_expansion_label(self):
         """Update the expansion header with current status."""
-        label = "Agent Activity"
+        label = "Activity"
         if self.current_action_title:
             label = f"{label} — {self.current_action_title}"
         label = f"{label} ({self.event_count} events)"
