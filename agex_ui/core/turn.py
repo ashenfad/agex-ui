@@ -22,6 +22,7 @@ from nicegui import ui
 from agex_ui.core.events import EventHandler
 from agex_ui.core.renderers import EventRenderer, ResponseRenderer
 from agex_ui.core.responses import Response
+from agex_ui.core.utils import clear_chat_until
 
 
 @dataclass
@@ -130,26 +131,9 @@ async def run_agent_turn(
         # Restore input
         chat_input.value = prompt
 
-        # Truncate UI: finding this message container index and removing it + everything after
-        try:
-            # chat_messages is a ui.column. Its children are in .default_slot.children
-            # We urge caution accessing internal slots, but it's the standard way in NiceGUI 1.x
-            children = chat_messages.default_slot.children
-            try:
-                msg_index = children.index(message_container)
-            except ValueError:
-                # Message might not be found if something weird happened
-                return
-
-            # Collect elements to remove (inclusive of this message)
-            to_remove = children[msg_index:]
-
-            # Remove them from the client
-            for element in to_remove:
-                chat_messages.remove(element)
-
-        except Exception as e:
-            ui.notify(f"UI Clean error: {e}", type="warning")
+        # Truncate UI
+        if not clear_chat_until(chat_messages, message_container):
+            ui.notify("UI Clean error: Message container not found", type="warning")
 
     # Add hidden undo button overlaying the user message (visible on hover)
     if isinstance(state, Versioned) and revert_commit:

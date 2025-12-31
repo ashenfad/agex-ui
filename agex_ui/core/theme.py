@@ -37,14 +37,13 @@ THEME_CSS = """
     --bg-secondary: #191e25;
     --bg-tertiary: #20252c;
     --bg-card: #161b22;
-    --bg-code: #1f2428;
+    --bg-code: #282f38;
 
     --text-primary: #c9d1d9;
     --text-secondary: #6b747e;
     --text-muted: #6e7681;
 
     --border-default: #22282f;
-    /* --border-default: #30363d; */
     --border-strong: #484f58;
 
     --accent-primary: #58a6ff;
@@ -67,6 +66,12 @@ body {
 /* Responsive content container - use vw to avoid parent-based sizing issues */
 .content-container {
     width: min(calc(100vw - 32px), 1000px);
+}
+
+/* Allow chat bubble content to scroll if too wide */
+.q-message-text {
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 /* Remove spacing between markdown elements in chat bubbles */
@@ -194,9 +199,8 @@ body {
 /* Inline code styling (backticks) */
 code:not(pre code) {
     background-color: var(--bg-code);
-    border: 1px solid var(--border-default);
-    border-radius: 4px;
-    padding: 2px 6px;
+    border-radius: 2px;
+    padding: 0.5px 0.5px;
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 0.9em;
     color: var(--accent-primary);
@@ -281,6 +285,16 @@ code:not(pre code) {
 }
 
 /* Table theming */
+.q-table {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.q-table__container {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
 [data-theme="dark"] .q-table {
     background-color: var(--bg-card);
     color: var(--text-primary);
@@ -292,8 +306,17 @@ code:not(pre code) {
 }
 
 [data-theme="dark"] .q-table td {
-    border-color: var(--border-default);
+    border-color: var(--border-default) !important;
 }
+
+[data-theme="dark"] .q-table__container,
+[data-theme="dark"] .q-table__card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-default) !important;
+    color: var(--text-primary) !important;
+}
+
+
 
 /* Input field theming */
 [data-theme="dark"] .q-field__control {
