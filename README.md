@@ -20,7 +20,10 @@ agex_ui/
 │   ├── responses.py    # Response type system (Response, ResponsePart, etc.)
 │   ├── renderers.py    # UI renderers for responses and events
 │   ├── events.py       # Event handling and token streaming
-│   └── turn.py         # Turn orchestration (run_agent_turn)
+│   ├── turn.py         # Turn orchestration (run_agent_turn)
+│   ├── history.py      # Chat history restoration from state
+│   ├── theme.py        # Theme management with CSS variables
+│   └── utils.py        # Shared UI utilities
 ├── templates/      # UI templates
 │   └── chat_interface.py  # Standard chat interface template
 └── cal/            # Calendar assistant example
@@ -90,23 +93,26 @@ def handle_prompt(prompt: str) -> Response:
 from nicegui import ui, app
 from agex_ui.templates import create_chat_interface, ChatInterfaceConfig
 from agex_ui.core.turn import TurnConfig
-from my_agent import handle_prompt
+from my_agent import agent, handle_prompt
 
 app.add_static_files("/assets", "./assets")
 
-# Create interface
-chat_messages, chat_input = create_chat_interface(
-    agent_task=handle_prompt,
-    config=ChatInterfaceConfig(
-        title="My Agent App",
-        page_title="My App",
-        greeting="Hello! How can I help?",
-    ),
-    turn_config=TurnConfig(
-        show_setup_events=False,
-        enable_token_streaming=True,
-    ),
-)
+@ui.page("/")
+def index():
+    # Create interface (returns chat_messages, chat_input, theme_manager)
+    chat_messages, chat_input, theme = create_chat_interface(
+        agent=agent,
+        agent_task=handle_prompt,
+        config=ChatInterfaceConfig(
+            title="My Agent App",
+            page_title="My App",
+            greeting="Hello! How can I help?",
+        ),
+        turn_config=TurnConfig(
+            show_setup_events=False,
+            enable_token_streaming=True,
+        ),
+    )
 
 ui.run()
 ```
@@ -148,11 +154,10 @@ ChatInterfaceConfig(
     header_bg_color="#5894c8",     # Header background color
     title="My App",                 # Header title
     page_title="My App",            # Browser page title
-    max_width="900px",              # Chat container width
     greeting="Welcome!",            # Initial bot message
     robot_avatar="assets/robot.png",
     human_avatar="assets/human.png",
-    agent_name="MyAgent",
+    dark_mode=True,                  # Start in dark mode
 )
 ```
 
