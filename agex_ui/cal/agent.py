@@ -20,7 +20,7 @@ PRIMER_PARTS = [
 ]
 
 agent = Agent(
-    name="cal",
+    name="Cal",
     primer="\n\n".join(PRIMER_PARTS),
     llm=connect_llm(
         provider="gemini",

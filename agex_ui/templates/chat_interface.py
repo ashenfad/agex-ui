@@ -31,7 +31,6 @@ class ChatInterfaceConfig:
     greeting: str = "Hello! How can I help you today?"
     robot_avatar: str = "assets/robot.png"
     human_avatar: str = "assets/human.png"
-    agent_name: str = "Agex"
     dark_mode: bool = True  # Start in dark mode by default
 
 
@@ -83,10 +82,12 @@ def create_chat_interface(
     # Header with theme toggle
     with (
         ui.header(elevated=False)
-        .style(f"background-color: {config.header_bg_color};")
-        .classes("items-center justify-between")
+        # .style(f"background-color: {config.header_bg_color};")
+        .style(
+            f"background-color: {config.header_bg_color}; min-height: 40px; padding: 4px 16px;"
+        ).classes("items-center justify-between")
     ):
-        ui.label(config.title).classes("text-2xl")
+        ui.label(config.title).classes("text-lg font-medium")
 
         # Spacer to push toggle to the right
         ui.element("div").classes("flex-grow")
@@ -97,25 +98,18 @@ def create_chat_interface(
     # Main content area
     with (
         ui.column()
-        .classes("w-full h-full p-4")
-        .style(f"flex-grow: 1; width: {config.max_width};")
+        # .classes("w-full h-full p-4")
+        .classes("w-full h-full px-4 pb-1").style(
+            f"flex-grow: 1; width: {config.max_width};"
+        )
     ):
         # Chat messages area
         chat_messages = (
             ui.column()
-            .classes("w-full overflow-auto p-4")
-            .style("height: 75vh; max-height: 75vh;")
+            .classes("w-full overflow-auto p-2")
+            .style("height: 82vh; max-height: 82vh;")
             .props("id=chat-messages-container")
         )
-
-        with chat_messages:
-            ui.chat_message(
-                config.greeting,
-                sent=False,
-                name=config.agent_name,
-                avatar=config.robot_avatar,
-                stamp=get_timestamp(),
-            ).classes("w-full").props("bg-color=blue-2")
 
         # Chat input area at bottom
         with ui.row().classes("w-full items-center p-2 border-t"):
@@ -175,14 +169,25 @@ def create_chat_interface(
     # Bind enter key to same handler
     chat_input.on("keydown.enter", handle_turn)
 
-    # Restore chat history from state events
-    restore_chat_history(
+    # Restore chat history from state events (returns True if history exists)
+    has_history = restore_chat_history(
         chat_messages=chat_messages,
         agent=agent,
         session=session,
         dark_mode=theme_manager.dark_mode,
         collapse_actions=turn_config.collapse_agent_activity,
     )
+
+    # Only show greeting if no history
+    if not has_history:
+        with chat_messages:
+            ui.chat_message(
+                config.greeting,
+                sent=False,
+                name=agent.name,
+                avatar=config.robot_avatar,
+                stamp=get_timestamp(),
+            ).classes("w-full").props("bg-color=blue-2")
 
     # Scroll to bottom after history loads (with delay for DOM to update)
     ui.timer(

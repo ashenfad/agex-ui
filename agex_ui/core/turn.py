@@ -172,7 +172,7 @@ async def run_agent_turn(
 
     # Create agent activity expansion
     with chat_messages:
-        current_expansion = ui.expansion("Agent Activity", icon="psychology").classes(
+        current_expansion = ui.expansion("Activity", icon="psychology").classes(
             "w-full border border-gray-200 rounded-lg text-gray-500"
         )
         current_expansion.value = not config.collapse_agent_activity

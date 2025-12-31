@@ -238,8 +238,8 @@ class EventRenderer:
                 highlighted = highlight(code, PythonLexer(), formatter)
 
                 code_section = f"""
-                <div style="margin-top: 8px;">
-                    <div style="margin-top: 4px; padding: 12px; border: 1px solid var(--border-default); border-radius: 6px; overflow-x: auto;">{highlighted}</div>
+                <div style="margin-top: 12px;">
+                    <div style="margin-top: 4px; overflow-x: auto;">{highlighted}</div>
                 </div>
                 """
             except ImportError:
@@ -253,10 +253,8 @@ class EventRenderer:
         return f"""
         <div class="themed-event-card">
             <div class="themed-event-header">
-                ⚡ ActionEvent — {escaped_namespace}
+                {escaped_title}
             </div>
-            <div class="themed-event-meta">{formatted_timestamp}</div>
-            <div style="font-weight: 500; margin-bottom: 8px;">{escaped_title}</div>
             {thinking_section}
             {code_section}
         </div>

@@ -125,10 +125,18 @@ def _render_action_events(
     if not action_events:
         return
 
+    # Build label with action count and last action title
+    last_action = action_events[-1]
+    last_title = getattr(last_action, "title", "") or ""
+    if last_title:
+        label = f"Activity — {last_title}"
+    else:
+        label = "Activity"
+
     with chat_messages:
-        expansion = ui.expansion(
-            f"Agent Activity ({len(action_events)} actions)", icon="psychology"
-        ).classes("w-full border border-gray-200 rounded-lg text-gray-500")
+        expansion = ui.expansion(label, icon="psychology").classes(
+            "w-full border border-gray-200 rounded-lg text-gray-500"
+        )
         expansion.value = not collapsed
 
         with expansion:
@@ -174,7 +182,7 @@ def restore_chat_history(
     session: str = "default",
     dark_mode: bool = False,
     collapse_actions: bool = True,
-) -> None:
+) -> bool:
     """Restore chat history from agent state events.
 
     Reconstructs the chat UI from historic events stored in the agent's state.
@@ -186,20 +194,23 @@ def restore_chat_history(
         session: Session identifier (default: "default")
         dark_mode: Whether dark mode is enabled
         collapse_actions: Whether to collapse ActionEvent expansions (default: True)
+
+    Returns:
+        True if history was restored, False if no history exists
     """
     # Get state and events
     state = agent.state(session)
     if state is None:
-        return
+        return False
 
     all_events = events(state)
     if not all_events:
-        return
+        return False
 
     # Filter out setup events
     main_events = [e for e in all_events if e.source != "setup"]
     if not main_events:
-        return
+        return False
 
     # Initialize renderers
     response_renderer = ResponseRenderer(dark_mode=dark_mode)
@@ -339,3 +350,5 @@ def restore_chat_history(
             _render_action_events(
                 chat_messages, current_actions, event_renderer, collapse_actions
             )
+
+    return True
