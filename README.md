@@ -1,8 +1,8 @@
-# agex-ui: Production-Ready Agent-Driven UIs
+# agex-ui
 
-A clean, reusable framework for building agent-driven user interfaces with [`agex`](https://ashenfad.github.io/agex/) and [NiceGUI](https://nicegui.io/).
+A demo for building agent-driven user interfaces with [`agex`](https://ashenfad.github.io/agex/) and [NiceGUI](https://nicegui.io/).
 
-**agex-ui** provides production-ready components for creating chat interfaces where AI agents can respond with rich, multi-type outputs including text, dataframes, and plotly visualizations—all with real-time streaming of agent activity.
+**agex-ui** provides components for creating chat interfaces where AI agents can respond with text, dataframes, and plotly visualizations, with real-time streaming of agent activity.
 
 ## Features
 
@@ -11,6 +11,33 @@ This repository serves as a reference implementation for integrating `agex` agen
 - **Multi-Type Responses**: Renders text, DataFrames, and Plotly figures.
 - **Real-Time Streaming**: Displays agent thought and action events as they happen.
 - **Agent Integration**: Standard patterns for connecting `agex` tasks to the UI.
+- **State Persistence**: Support for restoring chat from state and reverting agent actions.
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone and install
+git clone https://github.com/ashenfad/agex-ui.git
+cd agex-ui
+pip install -e .
+```
+
+### Running the TMNT Demo
+
+The TMNT (Turtle Scheduling) demo works out of the box with local iCal files—no OAuth required:
+
+```bash
+python -m agex_ui.tmnt.main
+```
+
+Then open your browser to the displayed URL (typically `http://localhost:8080`).
+
+> [!NOTE]
+> **LLM Configuration Required**: Set your [LLM provider credentials](https://ashenfad.github.io/agex/api/llm/) (e.g., `GOOGLE_API_KEY` for Gemini).
+
+This demo showcases a calendar assistant that helps schedule the four half-shelled heroes using the [`calgebra`](https://github.com/ashenfad/calgebra) library.
 
 ## Architecture
 
@@ -26,34 +53,17 @@ agex_ui/
 │   └── utils.py        # Shared UI utilities
 ├── templates/      # UI templates
 │   └── chat_interface.py  # Standard chat interface template
-└── cal/            # Calendar assistant example
-    ├── agent.py        # Agent definition with calgebra integration
+├── tmnt/           # TMNT demo (local iCal files, no OAuth)
+│   ├── agent.py        # Agent definition with calgebra integration
+│   ├── main.py         # Application entry point
+│   ├── primer.py       # Agent system prompts
+│   └── utils.py        # Calendar loading utilities
+└── cal/            # Google Calendar example (requires OAuth)
+    ├── agent.py        # Agent with Google Calendar integration
     ├── main.py         # Application entry point
     ├── primer.py       # Agent system prompts
     └── utils.py        # Calendar-specific utilities
 ```
-
-## Quick Start
-
-### Installation
-
-```bash
-# Clone and install
-git clone https://github.com/ashenfad/agex-ui.git
-cd agex-ui
-pip install -e .
-```
-
-### Running the Calendar Assistant
-
-```bash
-python -m agex_ui.cal.main
-```
-
-Then open your browser to the displayed URL (typically `http://localhost:8080`).
-
-> [!WARNING]
-> **Configuration Required**: This example requires valid [Google Calendar credentials](https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials) and a configured [LLM provider](https://ashenfad.github.io/agex/api/agent/#llm-configuration).
 
 ## Building Your Own Agent-Driven UI
 
@@ -70,7 +80,7 @@ import pandas as pd
 agent = Agent(
     name="my_agent",
     primer="You are a helpful assistant...",
-    llm_client=connect_llm(provider="anthropic", model="claude-haiku-4-5"),
+    llm=connect_llm(provider="anthropic", model="claude-haiku-4-5"),
 )
 
 # Register the Response type
@@ -117,7 +127,7 @@ def index():
 ui.run()
 ```
 
-That's it! You now have a full-featured agent-driven chat interface.
+That's it! You now have an agent-driven chat interface.
 
 ## Response Types
 
@@ -174,19 +184,30 @@ TurnConfig(
 )
 ```
 
-## The Calendar Assistant Example
+## Example Agents
 
-The included `cal` package demonstrates a production-ready agent that manages Google Calendar using the [`calgebra`](https://github.com/ashenfad/calgebra) library.
-This integration demonstrates how `agex` enables agents to use targeted DSLs as a powerful alternative to high-level JSON-based tooling.
+### TMNT Demo
 
-It showcases:
+The `tmnt` package demonstrates a calendar assistant using local iCal files. No OAuth or external API setup required beyond your LLM credentials.
 
-- Complex agent setup with multiple library registrations
-- Domain-specific helper functions
-- Rich responses combining text, tables, and visualizations
-- Custom primer engineering for calendar operations
+- Uses [`calgebra`](https://github.com/ashenfad/calgebra) for timeline operations
+- Showcases multi-part responses (text + tables + charts)
+- Demonstrates state persistence with `Versioned` storage
 
-See [`agex_ui/cal/`](agex_ui/cal/) for the implementation.
+```bash
+python -m agex_ui.tmnt.main
+```
+
+### Google Calendar Assistant (Advanced)
+
+The `cal` package demonstrates Google Calendar integration.
+
+> [!WARNING]
+> Requires [Google Calendar OAuth credentials](https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials).
+
+```bash
+python -m agex_ui.cal.main
+```
 
 ## Design Philosophy
 
@@ -202,8 +223,8 @@ This architecture ensures the framework remains flexible and reusable across dif
 ## Learn More
 
 - **agex Documentation**: [ashenfad.github.io/agex/](https://ashenfad.github.io/agex/)
+- **calgebra Documentation**: [github.com/ashenfad/calgebra](https://github.com/ashenfad/calgebra)
 - **NiceGUI Documentation**: [nicegui.io](https://nicegui.io/)
-- **Blog Post**: Building Agent-Driven UIs with agex (coming soon)
 
 ## License
 

@@ -14,13 +14,13 @@ classifiers = [
 dependencies = [
     "nicegui",
     "plotly",
-    "kaleido",  # for exporting plotly figures
+    "kaleido", # for exporting plotly figures
     "numpy",
     "pandas",
     "markdown",
-    "pygments",  # for syntax highlighting
-    "agex[gemini]>=0.8.5",
-    "calgebra[google-calendar]>=0.9.0"
+    "pygments", # for syntax highlighting
+    "agex[gemini]>=0.8.6",
+    "calgebra[google-calendar,ical]>=0.10.3",
 ]
 
 [project.optional-dependencies]

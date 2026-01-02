@@ -39,8 +39,11 @@ class PartRenderer:
         """Render pandas DataFrame as a themed table."""
         with (
             ui.element("div")
-            .classes("w-full overflow-x-auto")
-            .style("margin-top: 0.75em; margin-bottom: 0.75em;")
+            .classes("w-full overflow-x-auto overflow-y-auto")
+            .style(
+                "margin-top: 0.75em; margin-bottom: 0.75em; "
+                "max-height: 400px;"  # Limit height, scroll for long tables
+            )
         ):
             ui.table.from_pandas(df).classes("w-full themed-table").style(
                 "min-width: 0"
