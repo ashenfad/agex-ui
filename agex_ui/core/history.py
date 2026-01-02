@@ -21,7 +21,9 @@ from agex.agent.events import (
 from agex.state import Versioned
 from nicegui import ui
 
+import plotly.graph_objects as go
 from agex_ui.core.renderers import EventRenderer, ResponseRenderer
+from agex_ui.core.responses import PlotlyPart, Response
 from agex_ui.core.utils import clear_chat_until
 
 
@@ -160,8 +162,23 @@ def _render_agent_response(
             )
             .classes("w-full")
             .props(f'bg-color={bg_color} stamp="{_format_timestamp(timestamp)}"')
-        ):
+        ) as agent_message:
             response_renderer.render_response(result)
+
+            # Check if result contains wide content (Plotly only)
+            has_wide_content = False
+            if isinstance(result, go.Figure):
+                has_wide_content = True
+            elif isinstance(result, Response):
+                # Check if any part is wide (Plotly only)
+                for part in result.parts:
+                    if isinstance(part, (PlotlyPart, go.Figure)):
+                        has_wide_content = True
+                        break
+
+            # Apply wide style if needed
+            if has_wide_content:
+                agent_message.classes("wide-message")
 
 
 def restore_chat_history(
