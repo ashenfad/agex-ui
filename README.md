@@ -4,7 +4,7 @@ A demo for building agent-driven user interfaces with [`agex`](https://ashenfad.
 
 **agex-ui** provides components for creating chat interfaces where AI agents can respond with text, dataframes, and plotly visualizations, with real-time streaming of agent activity.
 
-![TMNT Calendar Assistant](assets/tmnt.png)
+<img src="assets/tmnt.png" alt="TMNT Calendar Assistant" width="500">
 
 ## Features
 
