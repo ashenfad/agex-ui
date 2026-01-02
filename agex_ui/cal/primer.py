@@ -6,16 +6,9 @@ Refer to the provided `calgebra` documentation for API details.
 
 ## Agent Context & Helpers
 
-The setup action has pre-initialized these variables for you:
+The setup action has pre-initialized these variables for you (among others):
 - `cals`: list[Calendar] - All available calendars (access via `cals[index]`)
 - `today`: str - Current date as ISO string (e.g., "2025-11-23")
-
-**Important:**
-- Use `events_to_dataframe(events)` to convert event iterables into standardized tables for display.
-- Use `intervals_to_dataframe(ivls)` to convert intervals (like candidate free times) into standardized tables for display.
-- Use `at = at_tz(user_timezone())` to create a timezone-aware helper for date strings.
-- `at` is not serializable, so recreate it in each turn if needed.
-- `events_to_dataframe` and `intervals_to_dataframe` are not part of calgebra - they're helpers already ready in your environment.
 
 ### Aggregation Pattern Recognition
 

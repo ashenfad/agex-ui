@@ -102,7 +102,7 @@ def create_chat_interface(
         # Chat messages area
         chat_messages = (
             ui.column()
-            .classes("w-full overflow-auto p-2")
+            .classes("w-full overflow-auto p-2 pr-6")
             .style("height: 82vh; max-height: 82vh; max-width: 100%;")
             .props("id=chat-messages-container")
         )
