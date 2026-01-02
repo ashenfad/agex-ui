@@ -12,7 +12,7 @@ app.add_static_files("/assets", "./assets")
 # Configure chat interface
 chat_config = ChatInterfaceConfig(
     title="TMNT Calendar Helper",
-    page_title="TMNT - Agex UI",
+    page_title="TMNT",
     greeting="Hello! Need help with the turtles' schedules?",
     max_width="1000px",
 )
@@ -33,5 +33,5 @@ chat_messages, chat_input, theme_manager = create_chat_interface(
     turn_config=turn_config,
 )
 
-# Run the app...
-ui.run()
+# Run the app with turtle emoji favicon
+ui.run(favicon="🐢")

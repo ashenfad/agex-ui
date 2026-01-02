@@ -12,7 +12,7 @@ app.add_static_files("/assets", "./assets")
 # Configure chat interface
 chat_config = ChatInterfaceConfig(
     title="Calendar Assistant",
-    page_title="Cal - Agex UI",
+    page_title="Cal",
     greeting="Hello! I can help you manage your Google Calendar.",
     max_width="1000px",
 )
@@ -33,7 +33,6 @@ chat_messages, chat_input, theme_manager = create_chat_interface(
     turn_config=turn_config,
 )
 
-# Run the app...
-# But you'll need oauth for google calendar access!
+# You'll need OAuth for Google Calendar access!
 # See https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials
-ui.run()
+ui.run(favicon="📅")
