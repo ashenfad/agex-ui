@@ -4,13 +4,14 @@ A demo for building agent-driven user interfaces with [`agex`](https://ashenfad.
 
 **agex-ui** provides components for creating chat interfaces where AI agents can respond with text, dataframes, and plotly visualizations, with real-time streaming of agent activity.
 
+![TMNT Calendar Assistant](assets/tmnt.png)
+
 ## Features
 
 This repository serves as a reference implementation for integrating `agex` agents into a web UI.
 
 - **Multi-Type Responses**: Renders text, DataFrames, and Plotly figures.
 - **Real-Time Streaming**: Displays agent thought and action events as they happen.
-- **Agent Integration**: Standard patterns for connecting `agex` tasks to the UI.
 - **State Persistence**: Support for restoring chat from state and reverting agent actions.
 
 ## Quick Start
