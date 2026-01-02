@@ -94,11 +94,11 @@ class PartRenderer:
         ):
             # Light mode chart (hidden in dark mode)
             ui.plotly(fig_light).classes("plotly-light-mode").style(
-                "min-height: 400px; height: 400px; width: 100%;"
+                "min-height: 350px; height: 350px; width: 100%;"
             )
             # Dark mode chart (hidden in light mode)
             ui.plotly(fig_dark).classes("plotly-dark-mode").style(
-                "min-height: 400px; height: 400px; width: 100%;"
+                "min-height: 350px; height: 350px; width: 100%;"
             )
 
     def render_code(self, code: str, language: str = "python"):
