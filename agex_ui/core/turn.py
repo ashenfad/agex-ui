@@ -224,6 +224,23 @@ async def run_agent_turn(
         agent_message.clear()
         response_renderer.render_response(result)
 
+    # Check if result contains wide content (Plotly only)
+    has_wide_content = False
+    if isinstance(result, go.Figure):
+        has_wide_content = True
+    elif isinstance(result, Response):
+        # Check if any part is wide (Plotly only)
+        from agex_ui.core.responses import PlotlyPart
+
+        for part in result.parts:
+            if isinstance(part, (PlotlyPart, go.Figure)):
+                has_wide_content = True
+                break
+
+    # Apply wide style if needed
+    if has_wide_content:
+        agent_message.classes("wide-message")
+
     # Set timestamp
     agent_message.props(f'stamp="{get_timestamp()}"')
     agent_message.update()

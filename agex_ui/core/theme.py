@@ -73,6 +73,31 @@ body {
     max-width: 100%;
 }
 
+/* Force agent messages to use full container width ONLY if they have wide content */
+.wide-message.q-message-received,
+.wide-message.q-message-sent {
+    width: 100% !important;
+}
+
+.wide-message.q-message-received .q-message-container,
+.wide-message.q-message-sent .q-message-container {
+    max-width: 100% !important;
+}
+
+/* Target the anonymous div between q-message-container and q-message-text 
+   and force it to fill the available space */
+.wide-message.q-message-received .q-message-container > div,
+.wide-message.q-message-sent .q-message-container > div {
+    flex-grow: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+/* Ensure the text bubble itself expands to fill the anonymous container */
+.wide-message .q-message-text {
+    width: 100% !important;
+}
+
 /* Remove spacing between markdown elements in chat bubbles */
 .q-message-text p,
 .q-message-text .markdown p {

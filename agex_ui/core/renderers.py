@@ -61,15 +61,14 @@ class PartRenderer:
         fig_light = copy.deepcopy(fig)
         fig_dark = copy.deepcopy(fig)
 
-        # Configure light version
+        # Configure light version - set explicit width for initial render
         if hasattr(fig_light, "update_layout"):
             fig_light.update_layout(
                 template="plotly_white",
                 paper_bgcolor="#ffffff",
                 plot_bgcolor="#f6f8fa",
                 autosize=True,
-                width=None,
-                height=None,
+                margin=dict(l=40, r=40, t=40, b=40),
             )
 
         # Configure dark version
@@ -79,25 +78,24 @@ class PartRenderer:
                 paper_bgcolor="#161b22",
                 plot_bgcolor="#0d1117",
                 autosize=True,
-                width=None,
-                height=None,
+                margin=dict(l=40, r=40, t=40, b=40),
             )
 
         # Render both versions with theme-aware visibility
         with (
             ui.element("div")
-            .classes("plotly-container")
+            .classes("plotly-container w-full")
             .style(
-                "overflow-x: auto; max-width: 100%; margin-top: 0.75em; margin-bottom: 0.75em;"
+                "overflow-x: auto; width: 100%; margin-top: 0.75em; margin-bottom: 0.75em;"
             )
         ):
             # Light mode chart (hidden in dark mode)
-            ui.plotly(fig_light).classes("w-full h-96 plotly-light-mode").style(
-                "min-height: 400px; max-width: 100%;"
+            ui.plotly(fig_light).classes("plotly-light-mode").style(
+                "min-height: 400px; height: 400px; width: 100%;"
             )
             # Dark mode chart (hidden in light mode)
-            ui.plotly(fig_dark).classes("w-full h-96 plotly-dark-mode").style(
-                "min-height: 400px; max-width: 100%;"
+            ui.plotly(fig_dark).classes("plotly-dark-mode").style(
+                "min-height: 400px; height: 400px; width: 100%;"
             )
 
     def render_code(self, code: str, language: str = "python"):
@@ -141,7 +139,10 @@ class ResponseRenderer:
         match response:
             case Response():
                 # Wrap all parts in a single container to eliminate gaps
-                with ui.element("div").style("margin: 0; padding: 0;"):
+                # Force full width so charts/tables aren't constrained by text width
+                with ui.element("div").classes("w-full").style(
+                    "margin: 0; padding: 0; width: 100%; min-width: 100%;"
+                ):
                     # Merge consecutive text parts to avoid gaps between them
                     normalized_parts = response.normalize()
                     merged_parts = []
