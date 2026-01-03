@@ -195,6 +195,8 @@ The `tmnt` package demonstrates a calendar assistant using local iCal files. No 
 - Showcases multi-part responses (text + tables + charts)
 - Demonstrates state persistence with `Versioned` storage
 
+📺 **[Watch the demo](https://youtu.be/10kG4tw0D4k)**
+
 ```bash
 python -m agex_ui.tmnt.main
 ```
