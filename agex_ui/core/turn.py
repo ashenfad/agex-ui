@@ -15,13 +15,23 @@ if TYPE_CHECKING:
 
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.graph_objects as go
 from agex import TaskCancelled, TaskClarify, TaskFail, TaskTimeout
-from agex.state import Versioned
+from agex.agent.events import (
+    ActionEvent,
+    CancelledEvent,
+    ClarifyEvent,
+    FailEvent,
+    FileEvent,
+    SuccessEvent,
+)
+from agex.state import Staged
 from nicegui import ui
 
 from agex_ui.core.events import EventHandler
 from agex_ui.core.renderers import EventRenderer, ResponseRenderer
 from agex_ui.core.responses import Response
+from agex_ui.core.sessions import SESSION_TITLE_KEY, SESSION_UPDATED_KEY
 from agex_ui.core.utils import clear_chat_until
 
 
@@ -64,6 +74,9 @@ async def run_agent_turn(
     response_renderer: ResponseRenderer | None = None,
     event_renderer: EventRenderer | None = None,
     dark_mode: bool = False,
+    refresh_file_list_callback: Callable[[], None] | None = None,
+    refresh_session_list_callback: Callable[[], None] | None = None,
+    refresh_preview_callback: Callable[[], None] | None = None,
 ):
     """Execute one agent turn with configurable rendering.
 
@@ -103,30 +116,40 @@ async def run_agent_turn(
     # Display user message
     with chat_messages:
         # Wrap message in a container for proper button positioning
-        message_container = ui.column().classes("self-end relative group w-auto")
+        # min-w-0 allows flex child to shrink below content size
+        message_container = ui.column().classes("self-end relative group max-w-full min-w-0")
 
         with message_container:
-            ui.chat_message(
-                prompt,
+            with ui.chat_message(
                 sent=True,
                 name="You",
                 avatar="assets/human.png",
                 stamp=get_timestamp(),
-            )
+            ):
+                ui.markdown(prompt)
 
     chat_input.value = ""  # Clear input immediately
 
-    # Capture state for potential revert (only if Versioned)
+    # Capture state for potential revert (only if Staged)
     revert_commit: str | None = None
-    if isinstance(state, Versioned):
+    if isinstance(state, Staged):
         revert_commit = state.current_commit
 
     async def undo_turn():
-        """Revert state to before this turn and remove UI elements."""
-        if isinstance(state, Versioned) and revert_commit:
-            if not state.revert_to(revert_commit):
-                ui.notify("Failed to revert state", type="negative")
+        """Reset state to before this turn and remove UI elements."""
+        if isinstance(state, Staged) and revert_commit:
+            if not state.reset_to(revert_commit):
+                ui.notify("Failed to reset state", type="negative")
                 return
+
+            if refresh_file_list_callback:
+                refresh_file_list_callback()
+
+            if refresh_session_list_callback:
+                refresh_session_list_callback()
+
+            if refresh_preview_callback:
+                refresh_preview_callback()
 
         # Restore input
         chat_input.value = prompt
@@ -136,7 +159,7 @@ async def run_agent_turn(
             ui.notify("UI Clean error: Message container not found", type="warning")
 
     # Add hidden undo button overlaying the user message (visible on hover)
-    if isinstance(state, Versioned) and revert_commit:
+    if isinstance(state, Staged) and revert_commit:
         with message_container:
             # Absolute positioning relative to the message container
             # right-14 offsets for the avatar width (~56px) to position over the bubble edge
@@ -169,8 +192,48 @@ async def run_agent_turn(
         dark_mode=dark_mode,
     )
 
+    # Track title from ActionEvents for post-task persistence
+    title_holder: dict = {"title": None, "timestamp": None}
+
     # Event callback wrapper
     def on_agent_event(evt):
+        if isinstance(evt, FileEvent):
+            async def render_file_bubble():
+                if evt.file_source == "user":
+                    # Render user file upload as chat bubble
+                    with chat_messages:
+                        with ui.chat_message(
+                            name="You",
+                            sent=True,
+                            avatar="assets/human.png",
+                            stamp=get_timestamp(),
+                        ):
+                             ui.markdown(event_renderer.render_file_event(evt))
+                # Agent file changes don't get a chat bubble
+
+                # Always refresh file list when files change
+                if refresh_file_list_callback:
+                    refresh_file_list_callback()
+
+                # Refresh preview if app/ files changed
+                if refresh_preview_callback:
+                    all_files = evt.added + evt.modified
+                    if any(f.startswith("app/") for f in all_files):
+                        refresh_preview_callback()
+
+                if config.auto_scroll:
+                    await scroll_chat_to_bottom(chat_messages)
+
+            asyncio.run_coroutine_threadsafe(render_file_bubble(), loop)
+
+        elif isinstance(evt, ActionEvent):
+            if evt.title:
+                title_holder["title"] = evt.title
+                title_holder["timestamp"] = evt.timestamp
+
+                if refresh_session_list_callback:
+                    ui.timer(0.01, refresh_session_list_callback, once=True)
+
         event_handler.handle_event(evt, event_renderer)
 
     # Token callback wrapper
@@ -205,6 +268,7 @@ async def run_agent_turn(
     try:
         result = await agent_task(
             prompt,
+            session=session,
             **task_kwargs,
         )
     except (TaskClarify, TaskFail) as e:
@@ -248,3 +312,18 @@ async def run_agent_turn(
     # Auto-scroll for agent responses
     if config.auto_scroll:
         await scroll_chat_to_bottom(chat_messages)
+
+    # Persist session title and timestamp after task completes
+    if isinstance(state, Staged):
+        from datetime import timezone
+
+        changed = False
+        if title_holder["title"]:
+            state[SESSION_TITLE_KEY] = title_holder["title"]
+            changed = True
+        state[SESSION_UPDATED_KEY] = datetime.now(timezone.utc).isoformat()
+        changed = True
+        if changed:
+            state.commit()
+            if refresh_session_list_callback:
+                refresh_session_list_callback()
