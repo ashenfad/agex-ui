@@ -1,6 +1,7 @@
 """Reusable chat interface template."""
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Awaitable, Callable
 
 if TYPE_CHECKING:
@@ -13,6 +14,7 @@ from nicegui import app, ui
 from agex.state import Staged
 
 from agex_ui.core.file_manager import setup_file_manager
+from agex_ui.core.preview import create_preview_panel, register_preview_route
 from agex_ui.core.history import (
     ChatHistoryState,
     remove_history_sentinel,
@@ -78,11 +80,6 @@ def create_chat_interface(
     # --- Preview Setup (if enabled) ---
     refresh_preview = None
     if config.enable_app_preview:
-        from agex_ui.core.preview import (
-            create_preview_panel,
-            register_preview_route,
-        )
-
         # Register preview route once per app startup
         if not hasattr(app, "_preview_route_registered"):
             register_preview_route(agent, namespace)
@@ -189,8 +186,6 @@ def _init_session_context(
     namespace: str,
     initial_branch: str | None,
 ) -> SessionContext:
-    from datetime import datetime, timezone
-
     state: Staged = agent.state(namespace)
 
     # Determine which branch to use
@@ -274,9 +269,6 @@ def _build_chat_area(
     refresh_preview = None
 
     if config.enable_app_preview:
-        from nicegui import app
-        from agex_ui.core.preview import create_preview_panel
-
         # Split layout: chat on left, preview on right
         # Use --header-height CSS variable to account for header
         # Style the splitter to have a more visible separator via props

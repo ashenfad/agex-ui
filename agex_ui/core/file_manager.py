@@ -1,5 +1,6 @@
 """File manager drawer component."""
 
+import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
 
@@ -193,7 +194,6 @@ def setup_file_manager(
             ui.notify(f"Deleted {len(to_delete)} files")
 
         async def handle_download_selected():
-            import os
             fs = agent.fs(namespace)
             for filename in list(selected_files):
                 try:

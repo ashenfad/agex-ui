@@ -7,7 +7,7 @@ and response rendering.
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Awaitable, Callable
 
 if TYPE_CHECKING:
@@ -315,8 +315,6 @@ async def run_agent_turn(
 
     # Persist session title and timestamp after task completes
     if isinstance(state, Staged):
-        from datetime import timezone
-
         changed = False
         if title_holder["title"]:
             state[SESSION_TITLE_KEY] = title_holder["title"]

@@ -1,6 +1,7 @@
 """Live preview infrastructure for agent-built NiceGUI apps."""
 
 import re
+import time
 import traceback
 from typing import TYPE_CHECKING, Callable
 from nicegui import ui, app
@@ -270,7 +271,6 @@ def create_preview_panel(
     def refresh_iframe():
         """Refresh the preview iframe."""
         # Use a timestamp to bypass browser caching
-        import time
         t = int(time.time() * 1000)
         iframe.content = f'<iframe id="preview-iframe" src="{preview_url}?t={t}" style="width: 100%; height: 100%; border: none;"></iframe>'
         iframe.update()

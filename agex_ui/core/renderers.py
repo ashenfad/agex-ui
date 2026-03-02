@@ -4,10 +4,17 @@ This module handles converting agent responses and events into NiceGUI component
 with theme-aware styling.
 """
 
+import copy
+import difflib
 import html as html_escape
+import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+
+import markdown
+from diff_match_patch import diff_match_patch
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -60,9 +67,6 @@ class PartRenderer:
             fig: Plotly figure to render
             dark_mode: Initial theme (used for default visibility)
         """
-        import copy
-        import json
-
         # Sanitize figure to ensure JSON serializability
         # This converts pandas Timestamps and other non-JSON types to strings
         fig = go.Figure(json.loads(fig.to_json()))
@@ -243,8 +247,6 @@ def _highlight_shell(code: str, dark_mode: bool) -> str:
     Returns:
         HTML string with highlighted shell commands
     """
-    import re
-
     # Colors (solarized-inspired)
     if dark_mode:
         cmd_color = "#268BD2"  # blue - command name
@@ -321,7 +323,6 @@ def _render_inline_diff(old_line: str, new_line: str, dark_mode: bool, filename:
     Returns (old_html, new_html) with specific changes highlighted and syntax colored.
     """
     try:
-        from diff_match_patch import diff_match_patch
         dmp = diff_match_patch()
         diffs = dmp.diff_main(old_line, new_line)
         dmp.diff_cleanupSemantic(diffs)
@@ -367,8 +368,6 @@ def _render_diff_view(
     Returns:
         HTML string with diff-style rendering
     """
-    import difflib
-
     # Handle insert modes - show context + inserted lines only
     if operation == "insert-after":
         # Search text kept as context, content inserted after
@@ -525,8 +524,6 @@ class EventRenderer:
         thinking_section = ""
         if thinking:
             # Render thinking as markdown with relaxed list rules
-            import markdown
-
             thinking_html = markdown.markdown(
                 thinking, extensions=["fenced_code", "tables", "nl2br", "sane_lists"]
             )
