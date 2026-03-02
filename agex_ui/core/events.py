@@ -5,6 +5,8 @@ during agent execution.
 """
 
 import asyncio
+import html as html_escape
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -189,8 +191,6 @@ class EventHandler:
 
     def _render_error_output_event(self, evt: OutputEvent):
         """Render an error OutputEvent in the activity panel."""
-        import html as html_escape
-
         error_content = get_error_output_content(evt)
 
         async def do_ui_update():
@@ -289,7 +289,6 @@ class EventHandler:
                     # Parse file metadata or accumulate content
                     if token.content.startswith("path="):
                         # Metadata: "path=foo.py,mode=append"
-                        import re
                         path_match = re.search(r"path=([^,]+)", token.content)
                         mode_match = re.search(r"mode=([^,]+)", token.content)
 
@@ -310,8 +309,6 @@ class EventHandler:
                     # Metadata format: "path=foo.py,match_all=false"
                     # Content contains <SEARCH>...</SEARCH> and one of
                     # <REPLACE>...</REPLACE>, <INSERT-AFTER>...</INSERT-AFTER>, or <INSERT-BEFORE>...</INSERT-BEFORE>
-                    import re
-
                     if token.content.startswith("path="):
                         # Start new edit action
                         path_match = re.search(r"path=([^,]+)", token.content)
@@ -328,8 +325,6 @@ class EventHandler:
                         self.current_action.current_edit["content"].append(token.content)
                 elif token.type == "edit" and token.done:
                     # Edit section complete - parse SEARCH and operation tags
-                    import re
-
                     if self.current_action.current_edit:
                         edit = self.current_action.current_edit
                         raw_content = "".join(edit["content"])

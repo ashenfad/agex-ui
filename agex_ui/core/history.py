@@ -4,6 +4,8 @@ This module reconstructs the chat UI from historic events stored in agex state.
 Supports lazy loading for long conversations.
 """
 
+import html as html_escape
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable
@@ -347,8 +349,6 @@ def _render_user_message(
 
 def _render_error_output_html(error_content: str) -> str:
     """Generate HTML for an error OutputEvent card."""
-    import html as html_escape
-
     escaped_content = html_escape.escape(error_content)
     return f"""
     <div class="themed-event-card">
@@ -592,8 +592,6 @@ def render_history_chunk(
         # Create a single wrapper for all prepended content.
         # Use position:absolute so it doesn't affect layout until revealed.
         # This prevents scroll jitter when content is added.
-        import uuid
-
         wrapper_id = f"prepend-wrapper-{uuid.uuid4().hex[:8]}"
         with chat_messages:
             wrapper = (
