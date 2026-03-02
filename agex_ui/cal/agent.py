@@ -1,7 +1,7 @@
 import calgebra
 import calgebra.gcsa as gcsa
 import calgebra.mutable as mutable
-from agex import Agent, connect_llm, connect_state
+from agex import Agent, connect_llm, connect_state, connect_fs
 from agex.helpers import register_pandas, register_plotly, register_stdlib
 from calgebra import to_dataframe
 from calgebra.gcsa import Event
@@ -34,24 +34,22 @@ agent = Agent(
         storage="disk",
         path="/tmp/agex/cal",
     ),
+    fs=connect_fs(type="virtual"),
     max_iterations=10,
     eval_timeout_seconds=15,
     log_high_water_tokens=100000,
 )
 
-
-# Register calgebra
-agent.module(calgebra, recursive=True, visibility="low")
+# Register calgebra w/ host fs access (for indirect google oauth)
+agent.module(calgebra, recursive=True, visibility="low", host_fs_access=True)
 
 # Highlight key bits of calgebra
-agent.module(gcsa, visibility="low")
 agent.cls(Event, visibility="high")
 agent.cls(mutable.WriteResult, visibility="medium")
 agent.fn(to_dataframe, visibility="high")
 
 # Local helper functions
 agent.fn(user_timezone, visibility="high")
-
 
 # Enable stdlib & data-oriented libs via helpers
 register_stdlib(agent)

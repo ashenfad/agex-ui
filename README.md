@@ -12,7 +12,9 @@ This repository serves as a reference implementation for integrating `agex` agen
 
 - **Multi-Type Responses**: Renders text, DataFrames, and Plotly figures.
 - **Real-Time Streaming**: Displays agent thought and action events as they happen.
-- **State Persistence**: Support for restoring chat from state and reverting agent actions.
+- **State Persistence**: Session branching, history restoration, and undo support.
+- **Live App Preview**: Sandboxed preview of agent-built NiceGUI apps with debug capture.
+- **File Management**: Upload, download, and browse files in the agent's virtual filesystem.
 
 ## Quick Start
 
@@ -25,11 +27,13 @@ cd agex-ui
 pip install -e .
 ```
 
-### Running the TMNT Demo
-
-The TMNT (Turtle Scheduling) demo works out of the box with local iCal files—no OAuth required:
+### Running a Demo
 
 ```bash
+# Workshop - agent builds interactive NiceGUI apps with live preview
+python -m agex_ui.workshop.main
+
+# TMNT - calendar assistant using local iCal files
 python -m agex_ui.tmnt.main
 ```
 
@@ -38,22 +42,30 @@ Then open your browser to the displayed URL (typically `http://localhost:8080`).
 > [!NOTE]
 > **LLM Configuration Required**: Set your [LLM provider credentials](https://ashenfad.github.io/agex/api/llm/) (e.g., `GOOGLE_API_KEY` for Gemini).
 
-This demo showcases a calendar assistant that helps schedule the four half-shelled heroes using the [`calgebra`](https://github.com/ashenfad/calgebra) library.
-
 ## Architecture
 
 ```
 agex_ui/
 ├── core/           # Reusable framework components
-│   ├── responses.py    # Response type system (Response, ResponsePart, etc.)
-│   ├── renderers.py    # UI renderers for responses and events
 │   ├── events.py       # Event handling and token streaming
-│   ├── turn.py         # Turn orchestration (run_agent_turn)
+│   ├── file_manager.py # File drawer component (upload/download/delete)
 │   ├── history.py      # Chat history restoration from state
+│   ├── preview.py      # Live preview infrastructure for sandboxed apps
+│   ├── renderers.py    # UI renderers for responses and events
+│   ├── responses.py    # Response type system (Response, ResponsePart, etc.)
+│   ├── session_panel.py# Session management drawer (history/fork/undo)
+│   ├── sessions.py     # Session manager with kvgit branch-backed state
 │   ├── theme.py        # Theme management with CSS variables
+│   ├── turn.py         # Turn orchestration (run_agent_turn)
+│   ├── user_bubble.py  # Shared user bubble rendering with revert support
 │   └── utils.py        # Shared UI utilities
 ├── templates/      # UI templates
-│   └── chat_interface.py  # Standard chat interface template
+│   └── chat_interface.py  # Standard chat interface template (orchestrator)
+├── workshop/       # App builder demo (agent builds NiceGUI apps)
+│   ├── agent.py        # Workshop agent with calgebra + NiceGUI tools
+│   ├── main.py         # Application entry point
+│   ├── nicegui_primer.py # NiceGUI layout and component best practices
+│   └── primer.py       # Agent system prompts
 ├── tmnt/           # TMNT demo (local iCal files, no OAuth)
 │   ├── agent.py        # Agent definition with calgebra integration
 │   ├── main.py         # Application entry point
@@ -186,6 +198,18 @@ TurnConfig(
 ```
 
 ## Example Agents
+
+### Workshop (App Builder)
+
+The `workshop` package demonstrates an agent that builds interactive NiceGUI apps. The agent writes and edits app code, which runs in a sandboxed live preview alongside the chat.
+
+- Live preview with sandboxed execution via [`sandtrap`](https://github.com/ashenfad/sandtrap)
+- File management (upload data files, browse agent's virtual filesystem)
+- Debug capture (DOM snapshots, console logs)
+
+```bash
+python -m agex_ui.workshop.main
+```
 
 ### TMNT Demo
 

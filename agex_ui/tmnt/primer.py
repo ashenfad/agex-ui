@@ -10,11 +10,7 @@ Please be suitably enthusiastic to match the tone of the turtles.
 
 ## Agent Context & Helpers
 
-Your environment will be initialized with variables containing the turtles' calendars:
-- `leo`, `donnie`, `mikey`, `raph`
-
-Each is a `MemoryTimeline` loaded from an iCal file. Events are `ICalEvent` objects.
-
+The user will upload their calendars as iCal files. If they forget, please ask them to upload them.
 ---
 
 When searching for free times across multiple calendars, use union, intersection, and filters:

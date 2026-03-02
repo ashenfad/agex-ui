@@ -25,13 +25,16 @@ turn_config = TurnConfig(
     collapse_agent_activity=True,
 )
 
-# Create the chat interface
-chat_messages, chat_input, theme_manager = create_chat_interface(
-    agent=agent,
-    agent_task=handle_prompt,
-    config=chat_config,
-    turn_config=turn_config,
-)
+# Create the chat interface inside a route handler
+# This ensures ui.run() has executed and storage_secret is configured
+@ui.page('/')
+def index():
+    chat_messages, chat_input, theme_manager = create_chat_interface(
+        agent=agent,
+        agent_task=handle_prompt,
+        config=chat_config,
+        turn_config=turn_config,
+    )
 
 # Run the app with turtle emoji favicon
-ui.run(favicon="🐢")
+ui.run(favicon="🐢", storage_secret="agex-ui-tmnt-secret")

@@ -26,13 +26,18 @@ turn_config = TurnConfig(
 )
 
 # Create the chat interface
-chat_messages, chat_input, theme_manager = create_chat_interface(
-    agent=agent,
-    agent_task=handle_prompt,
-    config=chat_config,
-    turn_config=turn_config,
-)
+@ui.page("/")
+def index(branch: str | None = None):
+    create_chat_interface(
+        agent=agent,
+        agent_task=handle_prompt,
+        config=chat_config,
+        turn_config=turn_config,
+        initial_branch=branch,
+    )
+
 
 # You'll need OAuth for Google Calendar access!
 # See https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#credentials
-ui.run(favicon="📅")
+ui.run(favicon="📅", storage_secret="agex-ui-cal-secret")
+
