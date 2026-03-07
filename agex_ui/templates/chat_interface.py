@@ -49,6 +49,10 @@ class ChatInterfaceConfig:
     enable_app_preview: bool = False
     app_preview_path: str = "app/main.py"  # VFS path to watch
 
+    # Custom right panel builder (alternative to app preview)
+    # Called inside splitter.after to build the right panel content.
+    custom_right_panel: Callable[[], None] | None = None
+
 
 def create_chat_interface(
     agent: "Agent",
@@ -267,30 +271,30 @@ def _build_chat_area(
         ChatAreaResult with chat elements
     """
     refresh_preview = None
+    use_splitter = config.enable_app_preview or config.custom_right_panel is not None
 
-    if config.enable_app_preview:
-        # Split layout: chat on left, preview on right
-        # Use --header-height CSS variable to account for header
-        # Style the splitter to have a more visible separator via props
-        # Persist splitter position in user storage
+    if use_splitter:
+        # Split layout: chat on left, preview/custom panel on right
         splitter_position = app.storage.user.get('preview_splitter_position', 50)
         with ui.splitter(value=splitter_position).classes("w-full").style(
             "height: calc(100vh - var(--header-height)); background-color: var(--bg-primary);"
         ).props("separator-style='background-color: var(--accent-primary); width: 4px; opacity: 0.5;'") as splitter:
-            # Save position when changed
             splitter.on_value_change(lambda e: app.storage.user.update({'preview_splitter_position': e.value}))
             with splitter.before:
                 chat_messages, chat_input = _build_chat_column(config)
             with splitter.after:
-                with ui.column().classes("w-full h-full p-0 m-0"):
-                    _, refresh_preview = create_preview_panel(
-                        session_ctx.branch,
-                        agent=agent,
-                        namespace=session_ctx.namespace,
-                        chat_messages=chat_messages,
-                        on_refresh=refresh_file_list,
-                        on_debug_captured=refresh_file_list,
-                    )
+                if config.custom_right_panel is not None:
+                    config.custom_right_panel()
+                else:
+                    with ui.column().classes("w-full h-full p-0 m-0"):
+                        _, refresh_preview = create_preview_panel(
+                            session_ctx.branch,
+                            agent=agent,
+                            namespace=session_ctx.namespace,
+                            chat_messages=chat_messages,
+                            on_refresh=refresh_file_list,
+                            on_debug_captured=refresh_file_list,
+                        )
 
     else:
         # Standard single-column layout

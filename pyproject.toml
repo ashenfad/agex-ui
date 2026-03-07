@@ -23,6 +23,7 @@ dependencies = [
     "agex[gemini]>=0.9.0",
     "calgebra[google-calendar,ical]>=0.10.3",
     "sandtrap>=0.1.7",
+    "marimo>=0.12.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
