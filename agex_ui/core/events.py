@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from agex import Event, OutputEvent, SummaryEvent
+from agex import ChapterEvent, Event, OutputEvent
 from agex.agent.datatypes import EditAction, FileAction
 from agex.eval.objects import PrintAction
 from agex.llm.core import StreamToken
@@ -150,7 +150,7 @@ class EventHandler:
             evt: Event from the agent
             renderer: EventRenderer instance for rendering events (optional)
         """
-        # Skip setup OutputEvents if configured (but show summary/checkpoint events)
+        # Skip setup OutputEvents if configured (but show chapter/checkpoint events)
         if (
             not self.show_setup_events
             and evt.source == "setup"
@@ -166,8 +166,8 @@ class EventHandler:
             self._render_error_output_event(evt)
             return
 
-        # Handle SummaryEvents (ActionEvents handled via token streaming)
-        if not isinstance(evt, SummaryEvent):
+        # Handle ChapterEvents (ActionEvents handled via token streaming)
+        if not isinstance(evt, ChapterEvent):
             return
 
         async def do_ui_update():
@@ -177,12 +177,12 @@ class EventHandler:
             self.update_expansion_label()
 
             with self.expansion:
-                # Render SummaryEvents with themed styling
+                # Render ChapterEvents with themed styling
                 with ui.element("div").classes("themed-event-card"):
                     ui.html(
                         f"""
-                        <div class="themed-event-header">📊 Summary</div>
-                        <div>{evt.as_html()}</div>
+                        <div class="themed-event-header">📖 Chapter: "{evt.name}"</div>
+                        <div>{evt._repr_html_()}</div>
                     """
                     )
 
